@@ -12,7 +12,6 @@ import util.util_probing as UP
 import util.util_rdb as UR
 
 from models.mlpprobe import MLPProbe
-from models.cae import ConcreteAutoencoder
 from models.standard_scaler import StandardScaler
 from probe_dataset import ProbeDataset
 
@@ -204,8 +203,8 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
         
     best_score = float('-inf')
     ret_score = float('-inf')
-    best_loss float('inf')
-    ret_loss float('inf')
+    best_loss = float('inf')
+    ret_loss = float('inf')
     accum_metrics = []
     best_model_dict = None
     best_scaler_dict = None
@@ -308,7 +307,7 @@ if __name__ == "__main__":
     torch.manual_seed(args.torch_seed)
     from_dir = ""
     if args.from_share == True:
-        from_dir = os.path.join(UC.SHARE_PATH, 'mtmidi_sp')
+        from_dir = os.path.join(UC.SHARE_PATH, 'mtmidi_prb')
     datadict = UD.load_data_dict(args.dataset)
 
     cur_ds = ProbeDataset(datadict, args.model_size, layer_idx=0, from_dir = from_dir, to_torch = True, device = device)

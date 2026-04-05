@@ -122,8 +122,7 @@ def ext_replace(old_path, new_ext = 'pt'):
     return outname
 
 def get_acts_shape(model_size):
-    model_str = ""
-    return (UC.MODEL_NUM_LAYERS[model_str], UC.FFN_DIM[model_str])
+    return (UC.MODEL_NUM_LAYERS[model_size], UC.FFN_DIM[model_size])
 
 
 # use_shape argument overrides shape getting (useful for baselines)

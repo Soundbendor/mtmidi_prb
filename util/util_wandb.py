@@ -42,7 +42,7 @@ def init(wdict, override = None):
 
 def build_config(parser_args, datadict, subsetdict):
     _config = {k:v for (k,v) in vars(parser_args).items()}
-    model_shape = UMN.get_acts_shape(parser_args.model_size)
+    model_shape = UMN.get_acts_shape(_config['model_size'])
     _config['num_epochs'] = UC.NUM_EPOCHS
     _config['is_64bit'] = UC.IS_64BIT
     _config['model_dim'] = model_shape[1]
@@ -70,7 +70,7 @@ def build_config(parser_args, datadict, subsetdict):
 
 
 def build_initdict(parser_args, _config):
-    _d = {'entity': entity, 'project': f'mtmidi_sp-{parser_args.expr_type}', 'dir': UC.WANDB_PATH, 'settings': wandb.Settings(init_timeout=120)}
+    _d = {'entity': entity, 'project': f'mtmidi_prb-{parser_args.expr_type}', 'dir': UC.WANDB_PATH, 'settings': wandb.Settings(init_timeout=120)}
     _d['config'] = _config
     return _d
 

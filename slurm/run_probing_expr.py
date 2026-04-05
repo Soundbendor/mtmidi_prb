@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("-ds", "--datasets", nargs="+", type=str, default=["polyrhythms"], help="datasets")
     parser.add_argument("-nd", "--num_days", type=int, default=1, help="number of days")
     parser.add_argument("-pt", "--partition", type=str, default="preempt", help="partition to run on")
-    parser.add_argument("-ms", "--model_size", nargs="+", type=str, default=["musicgen-small", "musicgen-medium", "musicgen-large"], help="musicgen-small/musicgen-medium/musicgen-large/jukebox/baseline-chroma/baseline-concat/baseline-mel/baseline-mfcc")
+    parser.add_argument("-ms", "--model_sizes", nargs="+", type=str, default=["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel", "musicgen-audio", "musicgen-small", "musicgen-medium", "musicgen-large", "jukebox"], help="musicgen-small/musicgen-medium/musicgen-large/jukebox/baseline-chroma/baseline-concat/baseline-mel/baseline-mfcc")
     parser.add_argument("-et", "--expr_type", type=str, default="mlp", help="experiment type")
     parser.add_argument("-wdb", "--use_wandb", type=strtobool, default=True, help="sync to wandb")
     parser.add_argument("-cd", "--use_cuda", type=strtobool, default=True, help="use cuda")
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                     slurm_strarr2 = ['#SBATCH -A eecs', f"#SBATCH -p {args.partition}"]
                 else:
                     slurm_strarr2 = ['#SBATCH -A soundbendor', f"#SBATCH -p {args.partition}"]
-            slurm_strarr3 = [f"#SBATCH --mem={args.ram_mem}G", f"#SBATCH --gres=gpu:{args.gpus}", f"#SBATCH -t {args.num_days}-00:00:00", f"#SBATCH --job-name={job_str}", "#SBATCH --export=ALL", f"#SBATCH --output=/nfs/guille/eecs_research/soundbendor/kwand/out_mtmidi_sp/{job_str}-%j.out", ""]
+            slurm_strarr3 = [f"#SBATCH --mem={args.ram_mem}G", f"#SBATCH --gres=gpu:{args.gpus}", f"#SBATCH -t {args.num_days}-00:00:00", f"#SBATCH --job-name={job_str}", "#SBATCH --export=ALL", f"#SBATCH --output=/nfs/guille/eecs_research/soundbendor/kwand/out_mtmidi_prb/{job_str}-%j.out", ""]
             slurm_strarr = slurm_strarr1 + slurm_strarr2 + slurm_strarr3
             p_str = f"python {py_path} -ev {args.eval} -ds {dataset} -et {args.expr_type} -ms {model_size} -sh {args.from_share} -wdb {args.use_wandb} -cd {args.use_cuda} -tsd {args.torch_seed} -ssd {args.split_seed}" 
             slurm_strarr.append(p_str)

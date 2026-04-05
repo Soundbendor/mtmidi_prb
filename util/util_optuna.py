@@ -5,7 +5,7 @@ from . import util_main as UMN
 from . import util_constants as UC
 
 singlelayer_search_space = {'l2_weight_decay_exp': [-4, -3, -2], 'dropout': [0.25, 0.5, 0.75], "learning_rate_exp": [-5, -4, -3], "batch_size": [64, 256], "data_norm": [True, False]}
-multilayer_search_space = {'l2_weight_decay_exp': [-2], 'dropout': [0.25, 0.5, 0.75], "batch_size": [64], "data_norm": [True]}
+multilayer_search_space = {'l2_weight_decay_exp': [-2], 'dropout': [0.25, 0.5, 0.75], "batch_size": [64], "data_norm": [True], 'learning_rate_exp': [-3] }
 
 def get_layer_search_space(model_size):
     ret = []
