@@ -91,7 +91,7 @@ FFN_DIM = {"baseline-concat": 960, "baseline-chroma": 72, "baseline-mfcc": 120, 
 # initial embeddings for mgs/mgm/mgl
 MODEL_NUM_LAYERS = {"baseline-concat": 1, "baseline-chroma": 1, "baseline-mfcc": 1, "baseline-mel": 1, "musicgen-audio": 1, "musicgen-small": 25, "musicgen-medium": 49, "musicgen-large": 49, "jukebox": 72}
 
-SINGLE_LAYER_MODELS = set(["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel": "musicgen-audio"])
+SINGLE_LAYER_MODELS = set(["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel", "musicgen-audio"])
 ### porting a lot of old code from mtmidi
 
 MUSICGEN_SR = 32000
