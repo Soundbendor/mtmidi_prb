@@ -42,8 +42,8 @@ def get_hf_model_str(model_size):
 def get_model_acts_path(model_size, dataset='polyrhythms', return_relative = False, make_dir = False, other_projdir = '', fold_num = -1):
     datapath = None
     if return_relative == False:
-        postactpath = by_projpath(UC.ACTS_FOLDER,make_dir = make_dir, other_projdir = other_projdir)
-        datapath = os.path.join(postactpath, dataset)
+        actpath = by_projpath(UC.ACTS_FOLDER,make_dir = make_dir, other_projdir = other_projdir)
+        datapath = os.path.join(actpath, dataset)
     else:
         datapath = UC.ACTS_FOLDER
     modelpath = os.path.join(datapath, model_size)
