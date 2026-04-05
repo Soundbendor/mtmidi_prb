@@ -42,7 +42,7 @@ def init(wdict, override = None):
 
 def build_config(parser_args, datadict, subsetdict):
     _config = {k:v for (k,v) in vars(parser_args).items()}
-    model_shape = UMN.get_postacts_shape(parser_args.model_size)
+    model_shape = UMN.get_acts_shape(parser_args.model_size)
     _config['num_epochs'] = UC.NUM_EPOCHS
     _config['is_64bit'] = UC.IS_64BIT
     _config['model_dim'] = model_shape[1]
