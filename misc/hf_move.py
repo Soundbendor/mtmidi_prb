@@ -5,7 +5,7 @@ from util import util_constants as UC
 import sys
 
 mv_test = True
-datdir = '/nfs/hpc/share/kwand/mtmidi_sp/postacts'
+datdir = '/nfs/hpc/share/kwand/mtmidi_prb/acts'
 dataset = 'notes'
 if len(sys.argv) > 1:
     dataset = sys.argv[1]

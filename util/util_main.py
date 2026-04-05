@@ -39,14 +39,14 @@ def get_hf_model_str(model_size):
     return model_str
 
 
-def get_model_postacts_path(model_size, dataset='polyrhythms', return_relative = False, make_dir = False, other_projdir = '', fold_num = -1):
+def get_model_acts_path(model_size, dataset='polyrhythms', return_relative = False, make_dir = False, other_projdir = '', fold_num = -1):
     datapath = None
     if return_relative == False:
-        postactpath = by_projpath(UC.POSTACTS_FOLDER,make_dir = make_dir, other_projdir = other_projdir)
+        postactpath = by_projpath(UC.ACTS_FOLDER,make_dir = make_dir, other_projdir = other_projdir)
         datapath = os.path.join(postactpath, dataset)
     else:
-        datapath = UC.POSTACTS_FOLDER
-    modelpath = os.path.join(datapath, f'musicgen-{model_size}')
+        datapath = UC.ACTS_FOLDER
+    modelpath = os.path.join(datapath, model_size)
     if fold_num > 0:
         modelpath = os.path.join(modelpath, f'fold_{fold_num}')
     if os.path.exists(modelpath) == False and make_dir == True:
@@ -121,23 +121,21 @@ def ext_replace(old_path, new_ext = 'pt'):
         outname = f'{fsplit}'
     return outname
 
-def get_postacts_shape(model_size):
+def get_acts_shape(model_size):
     model_str = ""
-    if model_size in UC.MUSICGEN_SIZES:
-        model_str = f'musicgen-{model_size}'
     return (UC.MODEL_NUM_LAYERS[model_str], UC.FFN_DIM[model_str])
 
 
 # use_shape argument overrides shape getting (useful for baselines)
-def get_postacts_file(model_size, dataset='polyrhythms', fname='', write = True, use_64bit = True, use_shape = None, other_projdir = '', fold_num = -1):
-    modelpath = get_model_postacts_path(model_size, dataset = dataset, return_relative = False, make_dir = write, other_projdir = other_projdir, fold_num = fold_num)
+def get_acts_file(model_size, dataset='polyrhythms', fname='', write = True, use_64bit = True, use_shape = None, other_projdir = '', fold_num = -1):
+    modelpath = get_model_acts_path(model_size, dataset = dataset, return_relative = False, make_dir = write, other_projdir = other_projdir, fold_num = fold_num)
     fpath = os.path.join(modelpath, fname)
     fp = None
     dtype = 'float32'
     mode = 'r'
     shape = None
     if use_shape == None:
-        shape = get_postacts_shape(model_size)
+        shape = get_acts_shape(model_size)
     else:
         shape = use_shape
     if use_64bit == True:
@@ -151,7 +149,7 @@ def get_postacts_file(model_size, dataset='polyrhythms', fname='', write = True,
     return fp
 
 def save_npy(save_arr, fname, model_size, dataset='polyrhythms', make_dir = True, other_projdir = '', fold_num = -1):
-    modelpath = get_model_postacts_path(model_shorthand, dataset = dataset, return_relative = False, make_dir = make_dir, other_projdir = other_projdir, fold_num = fold_num)
+    modelpath = get_model_acts_path(model_shorthand, dataset = dataset, return_relative = False, make_dir = make_dir, other_projdir = other_projdir, fold_num = fold_num)
     fpath = os.path.join(modelpath, fname)
     np.save(fpath, save_arr, allow_pickle = True)
 
@@ -181,6 +179,13 @@ def get_save_path(save_type, configdict, other=None, make_dir = True):
     elif save_type == 'model':
         subfolder = UC.MODELS_FOLDER
         ext = 'model_dict'
+    elif save_type == 'scaler64':
+        subfolder = UC.SCALERS_FOLDER
+        ext = 'scaler64_dict'
+    elif save_type == 'scaler32':
+        subfolder = UC.SCALERS_FOLDER
+        ext = 'scaler32_dict'
+
     cur_path = by_projpath_multi(subpaths=[subfolder, dataset, expr_type],make_dir = make_dir)
     fname = None
     if other == None:

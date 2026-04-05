@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-POSTACTS_FOLDER = 'postacts'
+ACTS_FOLDER = 'acts'
 SAMPLER_FOLDER = 'samplers'
 SCALERS_FOLDER = 'scalers'
 SCALERS_DOC_FOLDER = 'scalers_doc'
@@ -28,14 +28,12 @@ TRAIN_PCT = 0.7
 TEST_SUBPCT = 0.5
 OPT_DIRECTION = 'maximize'
 STANDARD_SCALER_CONSTANT_FEATURE_MASK = True
-LINEARNNPROBE_INITIAL_DROPOUT = False
+LINEARPROBE_INITIAL_DROPOUT = True
 
-MLPPROBE_INITIAL_DROPOUT = False
+MLPPROBE_INITIAL_DROPOUT = True
 MLPPROBE_HIDDEN_DROPOUT = True
-MLPPROBE_HIDDEN_DIM_MULT = 0.5
+MLPPROBE_HIDDEN_DIMS = [512]
 
-CAE_INIT_TEMP = 10.
-CAE_FINAL_TEMP = 0.01
 
 # for less than 11 classes
 CM_FIGSIZE_S = (5,5)
@@ -48,11 +46,14 @@ SHARE_PATH = os.path.join(os.sep, 'nfs','hpc', 'share', 'kwand')
 WANDB_PATH = os.path.join(os.sep, 'nfs','guille', 'eecs_research', 'soundbendor', 'kwand', 'wandb') 
 
 
-EXPR_PRETTY_NAMES = {'linearnn_full': 'Linear NN (full)', 'mlp_full': 'MLP NN (full)'}
-MUSICGEN_SIZES = ["small", "medium", "large"]
+EXPR_PRETTY_NAMES = {'mlp': 'MLP', 'linear': 'Linear Layer'}
+MODEL_SIZES = ["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel", "musicgen-audio", "musicgen-small", "musicgen-medium", "musicgen-large", "jukebox"]
 
-EXPR_SHORT = {"linearnn_full": "lnf", "standard_scaler": "sts", 'mlp_full': 'mlpf'}
-SIZES_SHORT = {"small": "s", "medium": "m", "large": "l"}
+EXPR_SHORT = {"mlp": "mlp", "standard_scaler": "sts", 'linear': 'lin'}
+
+MODEL_SIZES_SHORT = {"baseline-concat": "bcat", "baseline-chroma": "bchr", "baseline-mfcc": "bmfcc", "baseline-mel": "bmel", "musicgen-audio": "mga", "musicgen-small": "mgs", "musicgen-medium": "mgmm", "musicgen-large": "mgl", "jukebox": "j"}
+
+
 
 DATASET_SHORT = {"polyrhythms": "pl",
                  "dynamics": "dyn",
@@ -84,16 +85,17 @@ DATASET_PRETTY = {"polyrhythms": "Polyrhythms",
 
 
 
-MODEL_SIZE_SHORT = {"small": "sm", "medium": "med", "large": "lg"}
 # https://github.com/huggingface/transformers/blob/80996194bec45b16d4472a099e64b57e049bc6fd/src/transformers/models/musicgen/convert_musicgen_transformers.py#L120
-FFN_DIM = {"musicgen-small": 1024 * 4, "musicgen-medium": 1536 * 4, "musicgen-large": 2048 * 4}
+FFN_DIM = {"baseline-concat": 960, "baseline-chroma": 72, "baseline-mfcc": 120, "baseline-mel": 768, "musicgen-audio": 128, "musicgen-small": 1024, "musicgen-medium": 1536, "musicgen-large": 2048, "jukebox": 4800}
 
-# this time not using initial embeddings
-MODEL_NUM_LAYERS = {"musicgen-small": 24, "musicgen-medium": 48, "musicgen-large": 48}
+# initial embeddings for mgs/mgm/mgl
+MODEL_NUM_LAYERS = {"baseline-concat": 1, "baseline-chroma": 1, "baseline-mfcc": 1, "baseline-mel": 1, "musicgen-audio": 1, "musicgen-small": 25, "musicgen-medium": 49, "musicgen-large": 49, "jukebox": 72}
 
+SINGLE_LAYER_MODELS = set(["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel": "musicgen-audio"])
 ### porting a lot of old code from mtmidi
 
 MUSICGEN_SR = 32000
+JUKEBOX_SR = 44100
 # same as mtmidi
 # but secondary_dominant -> secondary_dominants
 # modemix_chordprog -> mode_mixture
@@ -103,7 +105,7 @@ SYNTHEORY_PLUS_DATASETS = set(['polyrhythms', 'dynamics', 'seventh_chords', 'sec
 SYNTHEORY_DATASETS = set(['tempos', 'time_signatures', 'chords', 'notes', 'scales', 'intervals', 'simple_progressions'])
 CHORDPROG_DATASETS = set(['secondary_dominant', 'modemix_chordprog', 'simple_progressions'])
 
-MODELS = ['musicgen-small', 'musicgen-medium', 'musicgen-large']
+MODELS = ['baseline-concat', 'baseline-chroma', 'baseline-mfcc', 'baseline-mel', 'musicgen-audio', 'musicgen-small', 'musicgen-medium', 'musicgen-large', 'jukebox']
 
 #datasets that are regression
 REG_DATASETS = set(['tempos'])

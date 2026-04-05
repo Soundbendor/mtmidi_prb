@@ -56,8 +56,9 @@ def make_confusion_matrix(truths, preds, datadict, configdict):
     return cmd.confusion_matrix
 
 # make_cm = make confusion matrix
-def get_classification_metrics(truths, preds, datadict, configdict, save_to_csv = False, make_cm = False):
+def get_classification_metrics(truths, preds, loss, datadict, configdict, save_to_csv = False, make_cm = False):
     ret = {}
+    ret['loss'] = loss
     ret['accuracy_score']= SKM.accuracy_score(truths, preds)
     ret['f1_macro'] = SKM.f1_score(truths, preds, average='macro')
     ret['f1_micro'] = SKM.f1_score(truths, preds, average='micro')
@@ -68,7 +69,7 @@ def get_classification_metrics(truths, preds, datadict, configdict, save_to_csv 
         ret['cm'] = make_confusion_matrix(truths, preds, datadict, configdict)
     return ret
 
-def get_regression_metrics(truths, preds, configdict, save_to_csv = False):
+def get_regression_metrics(truths, preds, loss, configdict, save_to_csv = False):
     metrics = ["mean_squared_error",
                "r2_score",
                "mean_absolute_error",
@@ -80,15 +81,16 @@ def get_regression_metrics(truths, preds, configdict, save_to_csv = False):
                "d2_absolute_error_score"
                ]
     ret = {metric: getattr(SKM, name)(truths,preds) for metrics in metrics}
+    ret['loss'] = loss
     if save_to_csv == True:
         save_results_to_csv(ret, configdict)
     return ret
 
-def get_metrics(truths, preds, datadict, configdict, save_to_csv = False, make_cm = False):
+def get_metrics(truths, preds, loss, datadict, configdict, save_to_csv = False, make_cm = False):
     if datadict['is_classification'] == True:
-        return get_classification_metrics(truths, preds, datadict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
+        return get_classification_metrics(truths, preds, loss, datadict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
     else:
-        return get_regression_metrics(truths, preds, configdict, save_to_csv = save_to_csv)
+        return get_regression_metrics(truths, preds, loss, configdict, save_to_csv = save_to_csv)
 
 def get_optimization_metric(metric_dict, datadict):
     ret = None

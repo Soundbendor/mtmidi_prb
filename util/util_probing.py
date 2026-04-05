@@ -133,37 +133,44 @@ def accumulate_truths_preds(truths, truths_to_add, preds, preds_to_add, batch_id
         else:
             return np.hstack((copy.deepcopy(truths),new_truths)), np.hstack((copy.deepcopy(preds), new_preds))
 
-def save_scaler_dict(scaler, run_name, is_64bit = UC.IS_64BIT):
-    cur_ext = ""
-    if is_64bit == True:
-        cur_ext = '64.scaler_dict'
-    else:
-        cur_ext = '32.scaler_dict'
-    scaler_path = UMN.by_projpath(UC.SCALERS_FOLDER, make_dir = True)
-    out_path = os.path.join(scaler_path, f'{run_name}-{cur_ext}')
-    torch.save(scaler.state_dict(), out_path)
-
-def load_scaler_dict(scaler, run_name, is_64bit = UC.IS_64BIT, device='cpu'):
-    cur_ext = ""
-    if is_64bit == True:
-        cur_ext = '64.scaler_dict'
-    else:
-        cur_ext = '32.scaler_dict'
-    scaler_path = UMN.by_projpath(UC.SCALERS_FOLDER)
-    in_path = os.path.join(scaler_path, f'{run_name}-{cur_ext}')
-    scaler.load_state_dict(torch.load(in_path, map_location=device, weights_only = False))
-
-def save_model_dict(model_dict, configdict, layer_idx, trial_number):
+def save_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix):
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
-    other_str = f'{layer_str}_{trial_str}'
+    other_str = f'{layer_str}_{trial_str}_{suffix}'
+
+    cur_type = None
+    if configdict['is_64bit'] == True:
+        cur_type = 'scaler64'
+    else:
+        cur_type = 'scaler32'
+    save_path = UMN.get_save_path(cur_type, configdict, other=other_str, make_dir = True)
+    torch.save(scaler.state_dict(), save_path)
+
+def load_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix, device='cpu'):
+    layer_str = f'l{layer_idx}'
+    trial_str = f't{trial_number}'
+    other_str = f'{layer_str}_{trial_str}_{suffix}'
+
+    cur_type = None
+    if configdict['is_64bit'] == True:
+        cur_type = 'scaler64'
+    else:
+        cur_type = 'scaler32'
+    save_path = UMN.get_save_path(cur_type, configdict, other=other_str, make_dir = False)
+
+    scaler.load_state_dict(torch.load(save_path, map_location=device, weights_only = False))
+
+def save_model_dict(model_dict, configdict, layer_idx, trial_number, suffix):
+    layer_str = f'l{layer_idx}'
+    trial_str = f't{trial_number}'
+    other_str = f'{layer_str}_{trial_str}_{suffix}'
     save_path = UMN.get_save_path('model', configdict, other=other_str, make_dir = True)
     torch.save(model_dict, save_path)
 
-def load_model_dict(model, configdict, layer_idx, trial_number, device='cpu'):
+def load_model_dict(model, configdict, layer_idx, trial_number, suffix, device='cpu'):
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
-    other_str = f'{layer_str}_{trial_str}'
+    other_str = f'{layer_str}_{trial_str}_{suffix}'
     save_path = UMN.get_save_path('model', configdict, other=other_str, make_dir = False)
     model.load_state_dict(save_path, map_location=device, weights_only = False)
 

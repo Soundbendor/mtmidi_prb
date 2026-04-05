@@ -17,8 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("-ds", "--datasets", nargs="+", type=str, default=["polyrhythms"], help="datasets")
     parser.add_argument("-nd", "--num_days", type=int, default=1, help="number of days")
     parser.add_argument("-pt", "--partition", type=str, default="preempt", help="partition to run on")
-    parser.add_argument("-ms", "--model_sizes", nargs="+", type=str, default=["small","medium","large"], help="small/medium/large")
-    parser.add_argument("-et", "--expr_type", type=str, default="linearnn_full", help="experiment type")
+    parser.add_argument("-ms", "--model_size", nargs="+", type=str, default=["musicgen-small", "musicgen-medium", "musicgen-large"], help="musicgen-small/musicgen-medium/musicgen-large/jukebox/baseline-chroma/baseline-concat/baseline-mel/baseline-mfcc")
+    parser.add_argument("-et", "--expr_type", type=str, default="mlp", help="experiment type")
     parser.add_argument("-wdb", "--use_wandb", type=strtobool, default=True, help="sync to wandb")
     parser.add_argument("-cd", "--use_cuda", type=strtobool, default=True, help="use cuda")
     parser.add_argument("-ev", "--eval", type=strtobool, default=False, help="eval")
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     for dataset in args.datasets:
         ds_short = UC.DATASET_SHORT[dataset]
         for model_size in args.model_sizes:
-            size_short = UC.SIZES_SHORT[model_size]         
+            size_short = UC.MODEL_SIZES_SHORT[model_size]         
             job_str = f'{expr_short}-{ds_short}-{size_short}'
             slurm_strarr1 = ["#!/bin/bash"]
             slurm_strarr2 = [f"#SBATCH -p {args.partition}"]
