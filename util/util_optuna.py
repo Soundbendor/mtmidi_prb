@@ -7,6 +7,11 @@ from . import util_constants as UC
 singlelayer_search_space = {'l2_weight_decay_exp': [-4, -3, -2], 'dropout': [0.25, 0.5, 0.75], "learning_rate_exp": [-5, -4, -3], "batch_size": [64, 256], "data_norm": [True, False]}
 multilayer_search_space = {'l2_weight_decay_exp': [-2], 'dropout': [0.25, 0.5, 0.75], "batch_size": [64], "data_norm": [True], 'learning_rate_exp': [-3] }
 
+def study_callback(study, trial):
+    study_sampler_path = study.user_attrs['sampler_filepath']
+    with open(study_sampler_path, 'wb') as f:
+        pickle.dump(study.sampler, f)
+
 def get_layer_search_space(model_size):
     ret = []
     num_layers = UC.MODEL_NUM_LAYERS[model_size]
@@ -51,6 +56,7 @@ def create_or_load_study(parser_args, seed=UC.SEED):
         cur_sampler = optuna.samplers.GridSampler(cur_search_space, seed=seed)
 
     ret['study'] = optuna.create_study(study_name=cur_study_name, sampler = cur_sampler, storage=rdb_url, direction=UC.OPT_DIRECTION, load_if_exists = (resuming == True and parser_args.restart_study == False))
+    ret['study'].set_user_attr('sampler_filepath', sampler_filepath)
     return ret
 
 

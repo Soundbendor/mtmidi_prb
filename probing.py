@@ -19,55 +19,6 @@ from functools import partial
 from distutils.util import strtobool
 import os, sys, time, argparse, copy
 
-
-# statistics gathering: first-pass (standard_scaler)
-def train_standard_scaler(datadict, subsetdict, configdict, layer_idx = 0, device = 'cpu', expr_suffix = 0, log_data=True):
-    ret = {}
-    # init rng
-    torch_gen = torch.Generator(device=device)
-    torch_gen.manual_seed(configdict['torch_seed'])
-
-    train_ds = subsetdict['train_subset']
-    scaler = StandardScaler(with_mean = True, with_std = True, use_64bit = configdict['is_64bit'], dim=configdict['model_dim'], use_constant_feature_mask = configdict['standard_scaler_constant_feature_mask'], device = device)
-    scaler.eval() # no learnable weights, set anyways
-
-    train_ds.dataset.set_layer_idx(layer_idx)
-    
-    mean_vecs_batch = None
-    var_vecs_batch = None
-
-    mean_vecs_epoch = None
-    var_vecs_epoch = None
-    for epoch_idx in range(configdict['num_epochs']):
-        train_dl = TUD.DataLoader(subsetdict['train_subset'], batch_size = configdict['batch_size'], shuffle=configdict['dataloader_shuffle'], generator=torch_gen)
-
-        if log_data == True and epoch_idx % 20 == 0:
-            mean_vecs_epoch = UP.accumulate_vecs(mean_vecs_epoch, scaler.get_mean())
-            var_vecs_epoch = UP.accumulate_vecs(var_vecs_epoch, scaler.get_var())
-        for batch_idx, data in enumerate(train_dl):
-            if log_data == True:
-                mean_vecs_batch = UP.accumulate_vecs(mean_vecs_batch, scaler.get_mean())
-                var_vecs_batch = UP.accumulate_vecs(var_vecs_batch, scaler.get_var())
-
-            ipt, ground_truth = data
-            scaler.partial_fit(ipt)
-
-    if log_data == True:
-            mean_vecs_batch = UP.accumulate_vecs(mean_vecs_batch, scaler.get_mean())
-            var_vecs_batch = UP.accumulate_vecs(var_vecs_batch, scaler.get_var())
-    if log_data == True:
-        mean_vecs_epoch = UP.accumulate_vecs(mean_vecs_epoch, scaler.get_mean())
-        var_vecs_epoch = UP.accumulate_vecs(var_vecs_epoch, scaler.get_var())
-    
-    ret['scaler'] = scaler
-    ret['mean_vecs_batch'] = mean_vecs_batch
-    ret['var_vecs_batch'] = var_vecs_batch
-
-    ret['mean_vecs_epoch'] = mean_vecs_epoch
-    ret['var_vecs_epoch'] = var_vecs_epoch
-    return ret
-
-
 def train_model(model, scaler, generator, opt_fn, loss_fn, train_subset, batch_size=64, shuffle = True, is_classification = True, device='cpu'):
     train_dl = TUD.DataLoader(train_subset, batch_size = batch_size, shuffle=shuffle, generator=generator)
     
@@ -132,7 +83,6 @@ def valid_test_model(model, scaler, generator, loss_fn, valid_subset, batch_size
            
             # don't need loss for testing
             if loss_fn != None:
-                loss = None
                 if is_classification == True:
                     loss = loss_fn(model_pred, ground_truth)
                 else:
@@ -152,11 +102,10 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     # suggested params
     layer_idx = trial.suggest_categorical('layer_idx', list(range(configdict['model_num_layers'])))
     
-    l2_weight_decay_exp = trial.suggest_int('l2_weight_decay_exp', -4, 0, step= 1)
+    l2_weight_decay_exp = trial.suggest_int('l2_weight_decay_exp', -4, -2, step= 1)
     l2_weight_decay = 0
 
-    if l2_weight_decay_exp < 0:
-        l2_weight_decay = 10.**l2_weight_decay_exp
+    l2_weight_decay = 10.**l2_weight_decay_exp
 
     dropout = trial.suggest_float('dropout', 0.25, 0.75, step=0.25)
     batch_size = trial.suggest_categorical('batch_size', [64,256])
@@ -182,7 +131,13 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     torch_gen = torch.Generator(device=device)
     torch_gen.manual_seed(configdict['torch_seed'])
     # init opt/loss
-    opt_fn = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_weight_decay)
+
+    opt_fn = None
+    if l2_weight_decay_exp < -2:
+        opt_fn = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2_weight_decay)
+    else:
+        opt_fn = torch.optim.Adam(model.parameters(), lr=lr)
+
 
     train_loss = None
     valid_loss = None
@@ -325,7 +280,7 @@ if __name__ == "__main__":
         studydict = UO.create_or_load_study(args, seed=UC.SEED)
         UO.record_dict_in_study(studydict, configdict)
         objective = partial(_objective, datadict=datadict, subsetdict=subsetdict, configdict=configdict, wandbdict=wandbdict, device=device)
-        callback_arr = []
+        callback_arr = [UO.study_callback]
         studydict['study'].optimize(objective, timeout = None, n_trials = None, n_jobs=1, gc_after_trial = True, callbacks=callback_arr)
     else:
         # EVALUATION ========== 

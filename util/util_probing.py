@@ -133,7 +133,8 @@ def accumulate_truths_preds(truths, truths_to_add, preds, preds_to_add, batch_id
         else:
             return np.hstack((copy.deepcopy(truths),new_truths)), np.hstack((copy.deepcopy(preds), new_preds))
 
-def save_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix):
+def save_scaler_dict(scaler, configdict, layer_idx, trial_number):
+    suffix = configdict['suffix']
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
     other_str = f'{layer_str}_{trial_str}_{suffix}'
@@ -144,9 +145,10 @@ def save_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix):
     else:
         cur_type = 'scaler32'
     save_path = UMN.get_save_path(cur_type, configdict, other=other_str, make_dir = True)
-    torch.save(scaler.state_dict(), save_path)
+    torch.save(scaler, save_path)
 
-def load_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix, device='cpu'):
+def load_scaler_dict(scaler_dict, configdict, layer_idx, trial_number, device='cpu'):
+    suffix = configdict['suffix']
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
     other_str = f'{layer_str}_{trial_str}_{suffix}'
@@ -160,14 +162,16 @@ def load_scaler_dict(scaler, configdict, layer_idx, trial_number, suffix, device
 
     scaler.load_state_dict(torch.load(save_path, map_location=device, weights_only = False))
 
-def save_model_dict(model_dict, configdict, layer_idx, trial_number, suffix):
+def save_model_dict(model_dict, configdict, layer_idx, trial_number):
+    suffix = configdict['suffix']
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
     other_str = f'{layer_str}_{trial_str}_{suffix}'
     save_path = UMN.get_save_path('model', configdict, other=other_str, make_dir = True)
     torch.save(model_dict, save_path)
 
-def load_model_dict(model, configdict, layer_idx, trial_number, suffix, device='cpu'):
+def load_model_dict(model, configdict, layer_idx, trial_number, device='cpu'):
+    suffix = configdict['suffix']
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
     other_str = f'{layer_str}_{trial_str}_{suffix}'

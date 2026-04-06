@@ -8,7 +8,7 @@ import os, time, subprocess
 from concurrent.futures import ThreadPoolExecutor
 
 def run_sbatch_script(script_path):
-    print(f"Running {script_fname}")
+    print(f"Running {script_path}")
     subprocess.run(["sbatch", "-W", f"{script_path}"])
 
 if __name__ == "__main__":
