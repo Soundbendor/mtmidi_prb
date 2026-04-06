@@ -134,9 +134,9 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
 
     opt_fn = None
     if l2_weight_decay_exp < -2:
-        opt_fn = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2_weight_decay)
+        opt_fn = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_weight_decay)
     else:
-        opt_fn = torch.optim.Adam(model.parameters(), lr=lr)
+        opt_fn = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
     train_loss = None
