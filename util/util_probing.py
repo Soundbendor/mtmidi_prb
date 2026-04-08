@@ -78,7 +78,7 @@ def get_train_test_subsets(dataset_obj, datadict, train_folds = UC.TRAIN_FOLDS, 
         cur_label = datadict['label']
         train_df = datadict['df'][idx_dict['train_idxs']]
         class_amounts = {k:v[0] for (k,v) in train_df[cur_label].value_counts().rows_by_key(cur_label).items()}
-        amount_arr = np.array([class_amounts[k] for k in datadict['label_arr']])
+        amount_arr = np.array([class_amounts[k] for k in datadict['label_arr']]).flatten()
         inv_class_prop = np.sum(amount_arr)/amount_arr
         weights = inv_class_prop/np.max(inv_class_prop)
     if idx_dict['valid_idxs'].shape[0] > 0:
