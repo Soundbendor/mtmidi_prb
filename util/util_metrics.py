@@ -62,7 +62,7 @@ def get_classification_metrics(truths, preds, loss, datadict, configdict, save_t
     ret['accuracy_score']= SKM.accuracy_score(truths, preds)
     ret['f1_macro'] = SKM.f1_score(truths, preds, average='macro')
     ret['f1_micro'] = SKM.f1_score(truths, preds, average='micro')
-    ret['balanced_accuracy'] = SKM.balanced_accuracy_score(truths, preds)
+    ret['balanced_accuracy_score'] = SKM.balanced_accuracy_score(truths, preds)
     if save_to_csv == True:
         save_results_to_csv(ret, configdict)
     if make_cm == True:
