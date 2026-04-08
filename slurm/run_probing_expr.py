@@ -63,7 +63,7 @@ if __name__ == "__main__":
                     slurm_strarr2 = ['#SBATCH -A soundbendor', f"#SBATCH -p {args.partition}"]
             slurm_strarr3 = [f"#SBATCH --mem={args.ram_mem}G", f"#SBATCH --gres=gpu:{args.gpus}", f"#SBATCH -t {args.num_days}-00:00:00", f"#SBATCH --job-name={job_str}", "#SBATCH --export=ALL", f"#SBATCH --output=/nfs/guille/eecs_research/soundbendor/kwand/out_mtmidi_prb/{job_str}-%j.out", ""]
             slurm_strarr = slurm_strarr1 + slurm_strarr2 + slurm_strarr3
-            p_str = f"python {py_path} -ev {args.eval} -ds {dataset} -et {args.expr_type} -ms {model_size} -sh {args.from_share} -wdb {args.use_wandb} -cd {args.use_cuda} -tsd {args.torch_seed} -ssd {args.split_seed}" 
+            p_str = f"python {py_path} -ev {args.eval} -ds {dataset} -et {args.expr_type} -ms {model_size} -sh {args.from_share} -wdb {args.use_wandb} -cd {args.use_cuda} -tsd {args.torch_seed} -ssd {args.split_seed} -sf {args.suffix}" 
             slurm_strarr.append(p_str)
             script_fname = f"{start_time}_{job_str}.sh"
             script_idx += 1
