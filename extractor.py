@@ -41,8 +41,8 @@ def path_handler(in_filepath, using_hf=False, model_sr = 44100, dur = 4., normal
     fold_num = -1 
     if using_hf == False:
         print(f'loading {in_filepath}', file=logfile_handle)
-        fbasename = UMN.get_basename(in_filepath)
-        fold_num = UMN.get_fold_num_from_filepath(in_filepath, with_ext = False)
+        fbasename = UMN.get_basename(in_filepath, with_ext = False)
+        fold_num = UMN.get_fold_num_from_filepath(in_filepath)
         out_fname = f'{fbasename}.{out_ext}'
         # don't need to load audio if jukebox
         audio = UMN.load_wav(in_filepath, dur = dur, normalize = normalize, sr = model_sr)
