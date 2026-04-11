@@ -53,7 +53,7 @@ if __name__ == "__main__":
         ds_short = UC.DATASET_SHORT[dataset]
         for model_size in args.model_sizes:
             size_short = UC.MODEL_SIZES_SHORT[model_size]         
-            job_str = f'{expr_short}-{ds_short}-{size_short}'
+            job_str = f'ex-{ds_short}-{size_short}'
             slurm_strarr1 = ["#!/bin/bash"]
             slurm_strarr2 = [f"#SBATCH -p {args.partition}"]
             if args.partition != 'preempt':

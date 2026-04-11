@@ -51,7 +51,7 @@ MODEL_SIZES = ["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-
 
 EXPR_SHORT = {"mlp": "mlp", "standard_scaler": "sts", 'linear': 'lin'}
 
-MODEL_SIZES_SHORT = {"baseline-concat": "bcat", "baseline-chroma": "bchr", "baseline-mfcc": "bmfcc", "baseline-mel": "bmel", "musicgen-audio": "mga", "musicgen-small": "mgs", "musicgen-medium": "mgm", "musicgen-large": "mgl", "jukebox": "j"}
+MODEL_SIZES_SHORT = {"baseline-concat": "bcat", "baseline-chroma": "bchr", "baseline-mfcc": "bmfcc", "baseline-mel": "bmel", "musicgen-audio": "mga", "musicgen-small": "mgs", "musicgen-medium": "mgm", "musicgen-large": "mgl", "jukebox": "j", "MERT-v1-95M": 'm95', "MERT-v1-330M": 'm330', "wav2vec2-base": "wb", "wav2vec2-large": "wl"}
 
 
 
