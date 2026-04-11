@@ -240,11 +240,12 @@ if __name__ == '__main__':
     logdir = UMN.by_projpath(subpath='log', make_dir = True)
     timestamp = int(time.time() * 1000)
 
-    from_dir = ""
+    from_dir = None
+    to_dir = None
     if args.from_share == True:
         from_dir = os.path.join(UC.SHARE_PATH, 'syntheory_plus')
     if args.to_share == True:
-        to_dir = os.path.join(UC.SHARE_PATH, 'mtmidi_sp')
+        to_dir = os.path.join(UC.SHARE_PATH, 'mtmidi_prb')
     # miscellaneous logs
     log_fname = get_print_name(dataset, model_size, is_csv = False, normalize = normalize, timestamp = timestamp)
     rec_fname = get_print_name(dataset, model_size, is_csv = True, normalize = normalize, timestamp = timestamp)
