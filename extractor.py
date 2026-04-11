@@ -1,4 +1,5 @@
 import sys,os,time,argparse,copy,types
+import torch
 from torch import nn
 import util.util_main as UMN
 import util.util_constants as UC
@@ -17,10 +18,9 @@ dur = 4.0
 
 # https://huggingface.co/m-a-p/MERT-v1-95M
 # https://huggingface.co/m-a-p/MERT-v1-330M
-# https://huggingface.co/docs/transformers/model_doc/wav2vec2
-# https://huggingface.co/facebook/wav2vec2-base-960h
 # https://huggingface.co/facebook/wav2vec2-large
-
+# https://huggingface.co/facebook/wav2vec2-base
+# https://huggingface.co/docs/transformers/main/model_doc/wav2vec2
 ### porting old code from mtmidi
 def get_print_name(dataset, model_size, is_csv = False, normalize = True, timestamp = 0):
     base_fname = f'{dataset}_musicgen-{model_size}-{timestamp}'
@@ -54,11 +54,12 @@ def path_handler(in_filepath, using_hf=False, model_sr = 44100, dur = 4., normal
         audio = UHF.get_from_entry_syntheory_audio(in_filepath, mono=True, normalize =normalize, dur = dur, sr=model_sr)
     return {'in_fpath': in_filepath, 'out_fname': out_fname, 'audio': audio, 'fname': fbasename, 'fold_num': fold_num}
 
-# same as get_musicgen_lm_hidden_states but swap out outputs.decoder_hidden_states with decoder_post_activations
 def get_musicgen_lm_acts(model, proc, audio, text="", meanpool = True, model_sr = 32000, device = 'cpu'):
     procd = proc(audio = audio, text = text, sampling_rate = model_sr, padding=True, return_tensors = 'pt')
     procd.to(device)
-    outputs = model(**procd, output_attentions=False, output_hidden_states=True)
+    outputs = None
+    with torch.no_grad():
+        outputs = model(**procd, output_attentions=False, output_hidden_states=True)
     dhs = None
     
     #dat = None
@@ -86,6 +87,40 @@ def get_musicgen_lm_acts(model, proc, audio, text="", meanpool = True, model_sr 
     return dhs.detach().cpu().numpy()
 
 
+def get_mert_acts(model, proc, audio, meanpool = True, model_sr = 24000, device = 'cpu'):
+    procd = proc(audio = audio, sampling_rate = model_sr, padding=True, return_tensors = 'pt')
+    procd.to(device)
+    outputs = None
+    with torch.no_grad():
+        outputs = model(**procd, output_attentions=False, output_hidden_states=True)
+    dhs = None
+    
+    #dat = None
+
+    # hidden
+    # outputs is a tuple of tensors with  shape (batch_size, seqlen, dimension) with 1 per layer
+    # torch stack makes it so we have (num_layers, batch_size, seqlen, dimension)
+    # then we average over seqlen in the meanpool case
+    # then squeeze to get rid of the 1 dim (if batch_size == 1)
+    # final shape is (num_layers, batch_size, dim)  (or (num_layers, dim) if bs=1)
+    
+    # attentions
+    # outputs is a tuple of tensors with  shape (batch_size, num_heads, seqlen, seqlen) with 1 per layer
+    # torch stack makes it so we have (num_layers, batch_size, num_heads, seqlen, sequlen)
+    # then we average over seqlens in the meanpool case
+    # then squeeze to get rid of the 1 dim (if batch_size == 1)
+    # final shape is (num_layers, batch_size, num_heads) (or (num_layers, num_heads) if bs = 1)
+
+    if meanpool == True:
+        dhs = torch.stack(outputs.hidden_states).mean(axis=2).squeeze()
+        #dat = torch.stack(outputs.decoder_attentions).mean(axis=(3,4)).squeeze()
+    else:
+        dhs = torch.stack(outputs.hidden_states).squeeze()
+        #dat = torch.stack(outputs.decoder_attentions).squeeze()
+    return dhs.detach().cpu().numpy()
+
+
+
 def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = True, logfile_handle=None, recfile_handle = None, memmap = True, pickup = False, fold_num = -1, from_dir = "", to_dir = ""):
     
     using_hf = cur_dataset in UC.SYNTHEORY_DATASETS
@@ -94,6 +129,7 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
     num_layers = None
     proc = None
     model = None
+    model_sr = None
     text = ""
     wav_path = os.path.join(UMN.by_projpath('wav'), cur_dataset)
     if len(from_dir) > 0:
@@ -115,11 +151,19 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
         torch.set_default_device(device)
     
     model_str = UMN.get_hf_model_str(model_size) 
-    proc = AutoProcessor.from_pretrained(model_str)
-    model = MusicgenForConditionalGeneration.from_pretrained(model_str, device_map=device)
-    model_sr = model.config.audio_encoder.sampling_rate
+    if 'musicgen' in model_size:
+        proc = AutoProcessor.from_pretrained(model_str)
+        model = MusicgenForConditionalGeneration.from_pretrained(model_str, device_map=device)
+        model_sr = model.config.audio_encoder.sampling_rate
+    elif 'MERT' in model_size:
+        # MERT is not in transformers library, uses modeling_MERT.py
+        # https://huggingface.co/docs/transformers/model_doc/wav2vec2#transformers.Wav2Vec2FeatureExtractor
+        # default is 16k, trust_remote_code auto sets it to 24k, hopefully
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(model_str, trust_remote_code=True)
+        model = AutoModel.from_pretrained(model_str, trust_remote_code = True)
+        model_sr = proc.sampling_rate
+        
 
-    override_mcg_forwards(model)
 
     # existing files removing latest (since it may be partially written) and removing extension for each of checking
     existing_name_set = None
@@ -141,11 +185,17 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
         fold_num = fdict['fold_num']
         # store by model_size (and fold_num if not using_hf)
         emb_file = None
-        np_arr = None
+        rep_arr = None
         if memmap == True:
             emb_file = UMN.get_acts_file(model_size, dataset=cur_dataset, fname=out_fname, use_64bit = use_64bit, write=True, use_shape = None, other_projdir = to_dir, fold_num = fold_num)
-        print(f'--- extracting musicgen_lm for {fpath} ---', file=logfile_handle)
-        rep_arr =  get_musicgen_lm_acts(model, proc, audio_ipt, text="", meanpool = True, model_sr = model_sr, device=device)
+        if 'musicgen' in model_size:
+            print(f'--- extracting musicgen_lm for {fpath} ---', file=logfile_handle)
+            rep_arr =  get_musicgen_lm_acts(model, proc, audio_ipt, text="", meanpool = True, model_sr = model_sr, device=device)
+        elif 'MERT' in model_size:
+            print(f'--- extracting mert for {fpath} ---', file=logfile_handle)
+            rep_arr =  get_mert_acts(model, proc, audio_ipt, meanpool = True, model_sr = model_sr, device=device)
+
+
         if memmap == True:
             emb_file[:,:] = rep_arr
             emb_file.flush()

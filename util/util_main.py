@@ -35,7 +35,13 @@ def by_projpath_multi(subpaths=[],make_dir = False):
 
 ### new stuff
 def get_hf_model_str(model_size):
-    model_str = f"facebook/musicgen-{model_size}" 
+    model_str = ''
+    if 'musicgen' or 'wav2vec2' in model_size:
+        model_str = f"facebook/{model_size}" 
+    elif 'MERT' in model_size:
+        model_str = f'm-a-p/{model_size}'
+    else:
+        model_str = ''
     return model_str
 
 

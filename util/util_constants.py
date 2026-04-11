@@ -86,16 +86,17 @@ DATASET_PRETTY = {"polyrhythms": "Polyrhythms",
 
 
 # https://github.com/huggingface/transformers/blob/80996194bec45b16d4472a099e64b57e049bc6fd/src/transformers/models/musicgen/convert_musicgen_transformers.py#L120
-FFN_DIM = {"baseline-concat": 960, "baseline-chroma": 72, "baseline-mfcc": 120, "baseline-mel": 768, "musicgen-audio": 128, "musicgen-small": 1024, "musicgen-medium": 1536, "musicgen-large": 2048, "jukebox": 4800}
+FFN_DIM = {"baseline-concat": 960, "baseline-chroma": 72, "baseline-mfcc": 120, "baseline-mel": 768, "musicgen-audio": 128, "musicgen-small": 1024, "musicgen-medium": 1536, "musicgen-large": 2048, "jukebox": 4800, 'MERT-v1-95M': 768, 'MERT-v1-330M': 1024, 'wav2vec2-base': 768, 'wav2vec2-large': 1024}
 
-# initial embeddings for mgs/mgm/mgl
-MODEL_NUM_LAYERS = {"baseline-concat": 1, "baseline-chroma": 1, "baseline-mfcc": 1, "baseline-mel": 1, "musicgen-audio": 1, "musicgen-small": 25, "musicgen-medium": 49, "musicgen-large": 49, "jukebox": 72}
+# initial embeddings for mgs/mgm/mgl/mert/wav2vec2
+MODEL_NUM_LAYERS = {"baseline-concat": 1, "baseline-chroma": 1, "baseline-mfcc": 1, "baseline-mel": 1, "musicgen-audio": 1, "musicgen-small": 25, "musicgen-medium": 49, "musicgen-large": 49, "jukebox": 72, 'MERT-v1-95M': 13, 'MERT-v1-330M': 25, 'wav2vec2-base': 13, 'wav2vec2-large': 25}
 
 SINGLE_LAYER_MODELS = set(["baseline-concat", "baseline-chroma", "baseline-mfcc", "baseline-mel", "musicgen-audio"])
 ### porting a lot of old code from mtmidi
 
 MUSICGEN_SR = 32000
 JUKEBOX_SR = 44100
+MERT_SR = 24000
 # same as mtmidi
 # but secondary_dominant -> secondary_dominants
 # modemix_chordprog -> mode_mixture
@@ -105,7 +106,7 @@ SYNTHEORY_PLUS_DATASETS = set(['polyrhythms', 'dynamics', 'seventh_chords', 'sec
 SYNTHEORY_DATASETS = set(['tempos', 'time_signatures', 'chords', 'notes', 'scales', 'intervals', 'simple_progressions'])
 CHORDPROG_DATASETS = set(['secondary_dominant', 'modemix_chordprog', 'simple_progressions'])
 
-MODELS = ['baseline-concat', 'baseline-chroma', 'baseline-mfcc', 'baseline-mel', 'musicgen-audio', 'musicgen-small', 'musicgen-medium', 'musicgen-large', 'jukebox']
+MODELS = ['baseline-concat', 'baseline-chroma', 'baseline-mfcc', 'baseline-mel', 'musicgen-audio', 'musicgen-small', 'musicgen-medium', 'musicgen-large', 'jukebox', 'MERT-v1-95M', 'MERT-v1-330M', 'wav2vec2-base', 'wav2vec2-large']
 
 #datasets that are regression
 REG_DATASETS = set(['tempos'])
