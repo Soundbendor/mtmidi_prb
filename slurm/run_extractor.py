@@ -21,7 +21,6 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--layer_num", type=int, default=-1, help="1-indexed layer num (all if < 0, for jukebox)")
     parser.add_argument("-fsh", "--from_share", type=strtobool, default=True, help="load from share partition")
     parser.add_argument("-tsh", "--to_share", type=strtobool, default=False, help="save to share partition")
-    parser.add_argument("-n", "--normalize", type=strtobool, default=True, help="normalize sound files")
     parser.add_argument("-m", "--memmap", type=strtobool, default=True, help="save as memmap, else save as npy")
     parser.add_argument("-ub", "--use_64bit", type=strtobool, default=False, help="use 64 bit")
     parser.add_argument("-db", "--debug", type=strtobool, default=False, help="debug mode")
@@ -49,6 +48,9 @@ if __name__ == "__main__":
     start_time = str(int(time.time() * 1000))
 
     for dataset in args.datasets:
+        cur_normalize = True
+        if 'dynamics' == dataset:
+            cur_normalize = False
         ds_short = UC.DATASET_SHORT[dataset]
         for model_size in args.model_sizes:
             size_short = UC.MODEL_SIZES_SHORT[model_size]         
@@ -62,13 +64,13 @@ if __name__ == "__main__":
                     slurm_strarr2 = ['#SBATCH -A soundbendor', f"#SBATCH -p {args.partition}"]
             slurm_strarr3 = [f"#SBATCH --mem={args.ram_mem}G", f"#SBATCH --gres=gpu:{args.gpus}", f"#SBATCH -t {args.num_days}-00:00:00", f"#SBATCH --job-name={job_str}", "#SBATCH --export=ALL", f"#SBATCH --output=/nfs/guille/eecs_research/soundbendor/kwand/out_mtmidi_prb/{job_str}-%j.out", ""]
             slurm_strarr = slurm_strarr1 + slurm_strarr2 + slurm_strarr3
-            p_str = f"python {py_path} -ds {dataset} -ms {model_size} -fsh {args.from_share} -tsh {args.to_share} -ub {args.use_64bit} -n {args.normalize} -l {args.layer_num} -m {args.memmap} -db {args.debug} -p {args.pickup} -fn {args.fold_num}" 
+            p_str = f"python {py_path} -ds {dataset} -ms {model_size} -fsh {args.from_share} -tsh {args.to_share} -ub {args.use_64bit} -n {cur_normalize} -l {args.layer_num} -m {args.memmap} -db {args.debug} -p {args.pickup} -fn {args.fold_num}" 
             slurm_strarr.append(p_str)
             script_fname = f"{start_time}_{job_str}.sh"
             script_idx += 1
             script_path = os.path.join(sh_dir, script_fname)
             script_str = "\n".join(slurm_strarr)
-            print(f"===== {dataset} | {model_size} =====")
+            print(f"===== {dataset} | {model_size} | normalized: {cur_normalize} =====")
             print(f"Creating {script_fname}")
             with open(script_path, 'w') as f:
                 f.write(script_str)
