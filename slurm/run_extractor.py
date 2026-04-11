@@ -48,7 +48,6 @@ if __name__ == "__main__":
     script_idx = 0
     start_time = str(int(time.time() * 1000))
 
-    expr_short = UC.EXPR_SHORT[args.expr_type] 
     for dataset in args.datasets:
         ds_short = UC.DATASET_SHORT[dataset]
         for model_size in args.model_sizes:
@@ -69,7 +68,7 @@ if __name__ == "__main__":
             script_idx += 1
             script_path = os.path.join(sh_dir, script_fname)
             script_str = "\n".join(slurm_strarr)
-            print(f"===== {args.expr_type} | {dataset} | {model_size} =====")
+            print(f"===== {dataset} | {model_size} =====")
             print(f"Creating {script_fname}")
             with open(script_path, 'w') as f:
                 f.write(script_str)
