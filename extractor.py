@@ -240,8 +240,8 @@ if __name__ == '__main__':
     logdir = UMN.by_projpath(subpath='log', make_dir = True)
     timestamp = int(time.time() * 1000)
 
-    from_dir = None
-    to_dir = None
+    from_dir = ""
+    to_dir = ""
     if args.from_share == True:
         from_dir = os.path.join(UC.SHARE_PATH, 'syntheory_plus')
     if args.to_share == True:
