@@ -88,7 +88,7 @@ def get_musicgen_lm_acts(model, proc, audio, text="", meanpool = True, model_sr 
 
 
 def get_mert_acts(model, proc, audio, meanpool = True, model_sr = 24000, device = 'cpu'):
-    procd = proc(audio = audio, sampling_rate = model_sr, padding=True, return_tensors = 'pt')
+    procd = proc(audio, sampling_rate = model_sr, padding=True, return_tensors = 'pt')
     procd.to(device)
     outputs = None
     with torch.no_grad():
