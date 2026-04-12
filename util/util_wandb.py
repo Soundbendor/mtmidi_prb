@@ -58,7 +58,7 @@ def build_config(parser_args, datadict, subsetdict):
         _config['probe_hidden_dims'] = []
         _config['early_stopping_check_interval'] = UC.EARLY_STOPPING_CHECK_INTERVAL
         _config['early_stopping_boredom'] = UC.EARLY_STOPPING_BOREDOM
-        _config['probe_initial_dropout'] =  UC.MLPPROBE_INITIAL_DROPOUT
+        _config['probe_initial_dropout'] =  UC.LINEARPROBE_INITIAL_DROPOUT
 
     elif parser_args.expr_type == 'mlp_2l':
         _config['probe_hidden_dims'] = UC.MLPPROBE_HIDDEN_DIMS

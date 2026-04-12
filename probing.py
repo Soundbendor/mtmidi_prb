@@ -107,7 +107,7 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
 
     l2_weight_decay = 10.**l2_weight_decay_exp
 
-    dropout = trial.suggest_float('dropout', 0.25, 0.75, step=0.25)
+    dropout = trial.suggest_float('dropout', 0.0, 0.75, step=0.25)
     batch_size = trial.suggest_categorical('batch_size', [64,256])
     data_norm = trial.suggest_categorical('data_norm', [True, False])
     lr_exp = trial.suggest_int('learning_rate_exp', -5, -3, step=1)
