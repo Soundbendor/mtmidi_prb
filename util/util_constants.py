@@ -97,6 +97,7 @@ SINGLE_LAYER_MODELS = set(["baseline-concat", "baseline-chroma", "baseline-mfcc"
 MUSICGEN_SR = 32000
 JUKEBOX_SR = 44100
 MERT_SR = 24000
+W2V2_SR = 16000
 # same as mtmidi
 # but secondary_dominant -> secondary_dominants
 # modemix_chordprog -> mode_mixture

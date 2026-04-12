@@ -87,7 +87,7 @@ def get_musicgen_lm_acts(model, proc, audio, text="", meanpool = True, model_sr 
     return dhs.detach().cpu().numpy()
 
 
-def get_mert_acts(model, proc, audio, meanpool = True, model_sr = 24000, device = 'cpu'):
+def get_mert_w2v2_acts(model, proc, audio, meanpool = True, model_sr = 24000, device = 'cpu'):
     procd = proc(audio, sampling_rate = model_sr, padding=True, return_tensors = 'pt')
     procd.to(device)
     outputs = None
@@ -162,6 +162,12 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
         proc = Wav2Vec2FeatureExtractor.from_pretrained(model_str, do_normalize = False, trust_remote_code=True)
         model = AutoModel.from_pretrained(model_str, trust_remote_code = True)
         model_sr = proc.sampling_rate
+    elif 'wav2vec2' in model_size:
+        # https://huggingface.co/docs/transformers/model_doc/wav2vec2#transformers.Wav2Vec2FeatureExtractor
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(model_str, do_normalize = False)
+        model = AutoModel.from_pretrained(model_str)
+        model_sr = proc.sampling_rate
+
         
 
 
@@ -191,9 +197,9 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
         if 'musicgen' in model_size:
             print(f'--- extracting musicgen_lm for {fpath} ---', file=logfile_handle)
             rep_arr =  get_musicgen_lm_acts(model, proc, audio_ipt, text="", meanpool = True, model_sr = model_sr, device=device)
-        elif 'MERT' in model_size:
-            print(f'--- extracting mert for {fpath} ---', file=logfile_handle)
-            rep_arr =  get_mert_acts(model, proc, audio_ipt, meanpool = True, model_sr = model_sr, device=device)
+        elif 'MERT' in model_size or 'wav2vec' in model_size:
+            print(f'--- extracting mert/w2v2 for {fpath} ---', file=logfile_handle)
+            rep_arr =  get_mert_w2v2_acts(model, proc, audio_ipt, meanpool = True, model_sr = model_sr, device=device)
 
 
         if memmap == True:
