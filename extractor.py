@@ -159,7 +159,7 @@ def get_acts(model_size, cur_dataset, normalize = True, dur = 4., use_64bit = Tr
         # MERT is not in transformers library, uses modeling_MERT.py
         # https://huggingface.co/docs/transformers/model_doc/wav2vec2#transformers.Wav2Vec2FeatureExtractor
         # default is 16k, trust_remote_code auto sets it to 24k, hopefully
-        proc = Wav2Vec2FeatureExtractor.from_pretrained(model_str, trust_remote_code=True)
+        proc = Wav2Vec2FeatureExtractor.from_pretrained(model_str, do_normalize = False, trust_remote_code=True)
         model = AutoModel.from_pretrained(model_str, trust_remote_code = True)
         model_sr = proc.sampling_rate
         
