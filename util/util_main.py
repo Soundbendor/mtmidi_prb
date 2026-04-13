@@ -178,7 +178,7 @@ def get_save_path(save_type, configdict, other=None, make_dir = True):
     if save_type == 'cm':
         subfolder = UC.CM_FOLDER
         ext = 'png'
-    elif save_type == 'res':
+    elif save_type == 'res_all':
         subfolder = UC.RESULTS_FOLDER
         ext = 'csv'
     elif save_type == 'model':

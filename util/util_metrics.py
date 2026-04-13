@@ -1,12 +1,38 @@
 import sklearn.metrics as SKM
 import matplotlib.pyplot as plt
+import numpy as np
 
 from . import util_main as UMN
 from . import util_constants as UC
 
-def save_results_to_csv(resdict, configdict):
+
+def aic(nll, k, N, per_sample = False):
+    res = 2. * np.log(nll) + 2.*k
+    if per_sample == True:
+        res /= N
+    return res
+
+def bic(nll, k, N, per_sample = False):
+    res = 2. * np.log(nll) + k * np.log(N)
+    if per_sample == True:
+        res /= N
+    return res
+
+def ebic(nll, k, N, D, gamma = UC.EBIC_GAMMA, per_sample = False):
+    res = 2. * np.log(nll) + k * np.log(N) + 2 * gamma * k* np.log(D)
+    if per_sample == True:
+        res /= N
+    return res
+
+def get_save_other_str(layer_idx):
+    return f'l{layer_idx}'
+
+def save_results_to_csv(resdict, configdict, layer_idx):
+    other_str = 'best'
+    if configdict['eval_best'] == False:
+        other_str = get_save_other_str(layer_idx)
     cur_folder = UMN.by_projpath(folder,make_dir = True)
-    save_path = UMN.get_save_path('res', configdict) 
+    save_path = UMN.get_save_path('res', configdict, other=other_str, make_dir = True) 
     cur_header = list(resdict.keys())
     f = open(out_path, 'w')
     csvw = csv.DictWriter(f, fieldnames=cur_header)
@@ -14,7 +40,7 @@ def save_results_to_csv(resdict, configdict):
     csvw.writerow(filt_dict)
     f.close()
 
-def make_confusion_matrix(truths, preds, datadict, configdict):
+def make_confusion_matrix(truths, preds, layer_idx, datadict, configdict):
     figsize = None
     hide_labels = False
     if datadict['num_classes'] < 10:
@@ -50,26 +76,41 @@ def make_confusion_matrix(truths, preds, datadict, configdict):
     title = f'{dataset_name} {expr_name} Results'
     ax.set_title(title)
     fig.tight_layout()
-    save_path = UMN.get_save_path('cm', configdict) 
+    other_str = 'best'
+    if configdict['eval_best'] == False:
+        other_str = get_save_other_str(layer_idx)
+    save_path = UMN.get_save_path('cm', configdict, other=other_str, make_dir = True) 
     plt.savefig(save_path)
     plt.clf()
     return cmd.confusion_matrix
 
 # make_cm = make confusion matrix
-def get_classification_metrics(truths, preds, loss, datadict, configdict, save_to_csv = False, make_cm = False):
-    ret = {}
+def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
+
+    ret = {} 
     ret['loss'] = loss
+    ret['layer_idx'] = layer_idx
     ret['accuracy_score']= SKM.accuracy_score(truths, preds)
     ret['f1_macro'] = SKM.f1_score(truths, preds, average='macro')
     ret['f1_micro'] = SKM.f1_score(truths, preds, average='micro')
     ret['balanced_accuracy_score'] = SKM.balanced_accuracy_score(truths, preds)
+    # only save for eval
     if save_to_csv == True:
-        save_results_to_csv(ret, configdict)
+        N = subsetdict['test_size']
+        model_size = configdict['model_size']
+        k = UC.FFN_DIM[model_size]
+        ret['aic'] = aic(loss, k, N, per_sample = False)
+        ret['aic_avg'] = aic(loss, k, N, per_sample = True)
+        ret['bic'] = bic(loss, k, N, per_sample = False) 
+        ret['bic_avg'] = bic(loss, k, N, per_sample = True) 
+        ret['ebic'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = False) 
+        ret['ebic_avg'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = True) 
+        save_results_to_csv(ret, configdict, layer_idx)
     if make_cm == True:
-        ret['cm'] = make_confusion_matrix(truths, preds, datadict, configdict)
+        ret['cm'] = make_confusion_matrix(truths, preds, layer_idx, datadict, configdict)
     return ret
 
-def get_regression_metrics(truths, preds, loss, configdict, save_to_csv = False):
+def get_regression_metrics(truths, preds, loss, layer_idx, configdict, save_to_csv = False):
     metrics = ["mean_squared_error",
                "r2_score",
                "mean_absolute_error",
@@ -82,15 +123,16 @@ def get_regression_metrics(truths, preds, loss, configdict, save_to_csv = False)
                ]
     ret = {metric: getattr(SKM, name)(truths,preds) for metrics in metrics}
     ret['loss'] = loss
+    ret['layer_idx'] = layer_idx
     if save_to_csv == True:
-        save_results_to_csv(ret, configdict)
+        save_results_to_csv(ret, configdict, layer_idx)
     return ret
 
-def get_metrics(truths, preds, loss, datadict, configdict, save_to_csv = False, make_cm = False):
+def get_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
     if datadict['is_classification'] == True:
-        return get_classification_metrics(truths, preds, loss, datadict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
+        return get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
     else:
-        return get_regression_metrics(truths, preds, loss, configdict, save_to_csv = save_to_csv)
+        return get_regression_metrics(truths, preds, loss, layer_idx, configdict, save_to_csv = save_to_csv)
 
 def get_optimization_metric(metric_dict, datadict):
     ret = None
