@@ -297,7 +297,7 @@ if __name__ == "__main__":
         else:
             for layer_idx in range(configdict['model_num_layers']):
                 best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_layer_idx(cur_study, layer_idx)
-            cur_params = make_eval_param_dict(best_param_dict, best_trial_dict)
+            cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
             eval_params.append(cur_params)
 
         for param_dict in eval_params:
