@@ -8,19 +8,19 @@ from . import util_constants as UC
 
 
 def aic(nll, k, N, per_sample = False):
-    res = 2. * np.log(nll) + 2.*k
+    res = 2. * nll + 2.*k
     if per_sample == True:
         res /= N
     return res
 
 def bic(nll, k, N, per_sample = False):
-    res = 2. * np.log(nll) + k * np.log(N)
+    res = 2. * nll + k * np.log(N)
     if per_sample == True:
         res /= N
     return res
 
 def ebic(nll, k, N, D, gamma = UC.EBIC_GAMMA, per_sample = False):
-    res = 2. * np.log(nll) + k * np.log(N) + 2 * gamma * k* np.log(D)
+    res = 2. * nll + k * np.log(N) + 2 * gamma * k* np.log(D)
     if per_sample == True:
         res /= N
     return res
