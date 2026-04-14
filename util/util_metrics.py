@@ -37,7 +37,7 @@ def save_results_to_csv(resdict, configdict, layer_idx):
     f = open(save_path, 'w')
     csvw = csv.DictWriter(f, fieldnames=cur_header)
     csvw.writeheader()
-    csvw.writerow(filt_dict)
+    csvw.writerow(resdict)
     f.close()
 
 def make_confusion_matrix(truths, preds, layer_idx, datadict, configdict):
