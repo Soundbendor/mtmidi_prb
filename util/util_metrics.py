@@ -31,7 +31,6 @@ def save_results_to_csv(resdict, configdict, layer_idx):
     other_str = 'best'
     if configdict['eval_best'] == False:
         other_str = get_save_other_str(layer_idx)
-    cur_folder = UMN.by_projpath(folder,make_dir = True)
     save_path = UMN.get_save_path('res', configdict, other=other_str, make_dir = True) 
     cur_header = list(resdict.keys())
     f = open(out_path, 'w')

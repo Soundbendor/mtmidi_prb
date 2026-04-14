@@ -26,7 +26,7 @@ def record_dict_in_study(studydict, cur_dict):
     for k,v in flat_dict.items():
         studydict['study'].set_user_attr(k,v)
 
-def create_or_load_study(parser_args, seed=UC.SEED):
+def create_or_load_study(parser_args, seed=UC.SEED, evaluation = False):
     ret = {}
 
     cur_study_name = create_study_name(parser_args)
@@ -36,7 +36,7 @@ def create_or_load_study(parser_args, seed=UC.SEED):
     rdb_filepath = os.path.join(rdb_dir, f'{cur_study_name}.db')
     resuming = False
     cur_sampler = None
-    if os.path.exists(rdb_filepath) == True and os.path.exists(sampler_filepath) == True and parser_args.restart_study == False:
+    if evaluation == False and os.path.exists(rdb_filepath) == True and os.path.exists(sampler_filepath) == True and parser_args.restart_study == False:
         resuming = True
         cur_sampler = pickle.load(open(sampler_filepath, 'rb'))
     rdb_url = "sqlite:///" + rdb_filepath
@@ -55,8 +55,9 @@ def create_or_load_study(parser_args, seed=UC.SEED):
         cur_search_space['layer_idx'] = get_layer_search_space(parser_args.model_size) 
         cur_sampler = optuna.samplers.GridSampler(cur_search_space, seed=seed)
 
-    ret['study'] = optuna.create_study(study_name=cur_study_name, sampler = cur_sampler, storage=rdb_url, direction=UC.OPT_DIRECTION, load_if_exists = (resuming == True and parser_args.restart_study == False))
-    ret['study'].set_user_attr('sampler_filepath', sampler_filepath)
+    if evaluation == False:
+        ret['study'] = optuna.create_study(study_name=cur_study_name, sampler = cur_sampler, storage=rdb_url, direction=UC.OPT_DIRECTION, load_if_exists = (resuming == True and parser_args.restart_study == False))
+        ret['study'].set_user_attr('sampler_filepath', sampler_filepath)
     return ret
 
 

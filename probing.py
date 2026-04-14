@@ -278,7 +278,7 @@ if __name__ == "__main__":
         if args.use_wandb == True:
             UW.login()
         # optuna stuff
-        studydict = UO.create_or_load_study(args, seed=UC.SEED)
+        studydict = UO.create_or_load_study(args, seed=UC.SEED, evaluation = False)
         UO.record_dict_in_study(studydict, configdict)
         objective = partial(_objective, datadict=datadict, subsetdict=subsetdict, configdict=configdict, wandbdict=wandbdict, device=device)
         callback_arr = [UO.study_callback]
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         # load study and get best params given rdb
         eval_params = []
 
-        cur_study = UO.create_or_load_study(args, seed=UC.SEED)
+        cur_study = UO.create_or_load_study(args, seed=UC.SEED, evaluation = True)
         if args.eval_best == True:
             best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_study(cur_study)
             cur_params = make_eval_param_dict(best_param_dict, best_trial_dict)
