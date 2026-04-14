@@ -38,7 +38,7 @@ def create_or_load_study(parser_args, seed=UC.SEED):
     cur_sampler = None
     if os.path.exists(rdb_filepath) == True and os.path.exists(sampler_filepath) == True and parser_args.restart_study == False:
         resuming = True
-        cur_sampler = pickle.load(open(sampler_file, 'rb'))
+        cur_sampler = pickle.load(open(sampler_filepath, 'rb'))
     rdb_url = "sqlite:///" + rdb_filepath
     ret['study_name'] = cur_study_name
     ret['sampler_filepath'] = sampler_filepath
