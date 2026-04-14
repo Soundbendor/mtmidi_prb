@@ -35,7 +35,7 @@ def get_best_id_val_from_trial_ids(conn, trial_ids):
 
 
 def get_layer_idx_trial_ids(conn, layer_idx):
-    tv = pl.read_database(query=f"select * from trial_params where param_name='layer_idx' and param_value={layer_idx}", connnection=conn)
+    tv = pl.read_database(query=f"select * from trial_params where param_name='layer_idx' and param_value={layer_idx}", connection=conn)
     return tv['trial_id'].to_numpy()
 
 
