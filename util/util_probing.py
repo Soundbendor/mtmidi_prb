@@ -147,7 +147,7 @@ def save_scaler_dict(scaler, configdict, layer_idx, trial_number):
     save_path = UMN.get_save_path(cur_type, configdict, other=other_str, make_dir = True)
     torch.save(scaler, save_path)
 
-def load_scaler_dict(scaler_dict, configdict, layer_idx, trial_number, device='cpu'):
+def load_scaler_dict(scaler, configdict, layer_idx, trial_number, device='cpu'):
     suffix = configdict['suffix']
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
