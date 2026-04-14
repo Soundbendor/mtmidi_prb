@@ -55,6 +55,8 @@ if __name__ == "__main__":
         for model_size in args.model_sizes:
             size_short = UC.MODEL_SIZES_SHORT[model_size]         
             job_str = f'{expr_short}-{ds_short}-{size_short}'
+            if args.eval == True:
+                job_str = f'e_{job_str}'
             slurm_strarr1 = ["#!/bin/bash"]
             slurm_strarr2 = [f"#SBATCH -p {args.partition}"]
             if args.partition != 'preempt':
@@ -67,10 +69,12 @@ if __name__ == "__main__":
             p_str = f"python {py_path} -ev {args.eval} -eb {args.eval_best} -ds {dataset} -et {args.expr_type} -ms {model_size} -sh {args.from_share} -wdb {args.use_wandb} -cd {args.use_cuda} -tsd {args.torch_seed} -ssd {args.split_seed} -sf {args.suffix}" 
             slurm_strarr.append(p_str)
             script_fname = f"{start_time}_{job_str}.sh"
+            if args.eval == True:
+                script_fname = f'e_{script_fname}'
             script_idx += 1
             script_path = os.path.join(sh_dir, script_fname)
             script_str = "\n".join(slurm_strarr)
-            print(f"===== {args.expr_type} | {dataset} | {model_size} =====")
+            print(f"===== {args.expr_type} | {dataset} | {model_size} | EVAL: {args.eval} =====")
             print(f"Creating {script_fname}")
             with open(script_path, 'w') as f:
                 f.write(script_str)
