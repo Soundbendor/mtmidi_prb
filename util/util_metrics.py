@@ -33,7 +33,7 @@ def save_results_to_csv(resdict, configdict, layer_idx):
         other_str = get_save_other_str(layer_idx)
     save_path = UMN.get_save_path('res', configdict, other=other_str, make_dir = True) 
     cur_header = list(resdict.keys())
-    f = open(out_path, 'w')
+    f = open(save_path, 'w')
     csvw = csv.DictWriter(f, fieldnames=cur_header)
     csvw.writeheader()
     csvw.writerow(filt_dict)
