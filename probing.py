@@ -292,13 +292,13 @@ if __name__ == "__main__":
         cur_study = UO.create_or_load_study(args, seed=UC.SEED, evaluation = True)
         if args.eval_best == True:
             best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_study(cur_study)
-            cur_params = make_eval_param_dict(best_param_dict, best_trial_dict)
+            cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
             eval_params.append(cur_params)
         else:
             for layer_idx in range(configdict['model_num_layers']):
                 best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_layer_idx(cur_study, layer_idx)
-            cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
-            eval_params.append(cur_params)
+                cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
+                eval_params.append(cur_params)
 
         for param_dict in eval_params:
             layer_idx = param_dict['layer_idx']
@@ -337,7 +337,7 @@ if __name__ == "__main__":
                 lest_loss = nn.MSELoss(reduction='sum')
 
 
-            test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, None, subsetdict['test_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
+            test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, subsetdict['test_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
             # get test metrics
             test_metrics = UME.get_metrics(test_truths, test_preds, test_total_loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = True, make_cm = True)
 
