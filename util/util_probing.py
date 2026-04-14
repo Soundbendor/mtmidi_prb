@@ -176,7 +176,7 @@ def load_model_dict(model, configdict, layer_idx, trial_number, device='cpu'):
     trial_str = f't{trial_number}'
     other_str = f'{layer_str}_{trial_str}_{suffix}'
     save_path = UMN.get_save_path('model', configdict, other=other_str, make_dir = False)
-    model.load_state_dict(save_path, map_location=device, weights_only = False)
+    model.load_state_dict(torch.load(save_path, map_location=device, weights_only = False))
 
 
 def log_scaler_epoch_mean_var(run_name, scalerdict):
