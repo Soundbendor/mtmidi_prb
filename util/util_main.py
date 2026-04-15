@@ -181,6 +181,9 @@ def get_save_path(save_type, configdict, other=None, make_dir = True):
     elif save_type == 'res':
         subfolder = UC.RESULTS_FOLDER
         ext = 'csv'
+    elif save_type == 'res_train':
+        subfolder = UC.RESULTS_TRAIN_FOLDER
+        ext = 'csv'
     elif save_type == 'model':
         subfolder = UC.MODELS_FOLDER
         ext = 'model_dict'

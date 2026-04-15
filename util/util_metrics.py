@@ -29,10 +29,15 @@ def get_save_other_str(layer_idx):
     return f'l{layer_idx}'
 
 def save_results_to_csv(resdict, configdict, layer_idx):
+    res_path = None
     other_str = 'best'
     if configdict['eval_best'] == False:
         other_str = get_save_other_str(layer_idx)
-    save_path = UMN.get_save_path('res', configdict, other=other_str, make_dir = True) 
+    if configdict['eval_nll'] == True:
+        res_path = 'res_train'
+    else:
+        res_path = 'res'
+    save_path = UMN.get_save_path(res_path, configdict, other=other_str, make_dir = True) 
     cur_header = list(resdict.keys())
     f = open(save_path, 'w')
     csvw = csv.DictWriter(f, fieldnames=cur_header)
@@ -96,7 +101,11 @@ def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetd
     ret['balanced_accuracy_score'] = SKM.balanced_accuracy_score(truths, preds)
     # only save for eval
     if save_to_csv == True:
-        N = subsetdict['test_size']
+        N = None
+        if configdict['eval_nll'] == True:
+            N = subsetdict['train_size']
+        else:
+            N = subsetdict['test_size']
         model_size = configdict['model_size']
         k = UC.FFN_DIM[model_size]
         ret['aic'] = aic(loss, k, N, per_sample = False)

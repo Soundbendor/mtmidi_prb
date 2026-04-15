@@ -245,6 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("-cd", "--use_cuda", type=strtobool, default=True, help="use cuda")
     parser.add_argument("-ev", "--eval", type=strtobool, default=False, help="eval")
     parser.add_argument("-eb", "--eval_best", type=strtobool, default=False, help="eval on the best trial per model")
+    parser.add_argument("-en", "--eval_nll", type=strtobool, default=False, help="do eval on training dataset for nll comps")
     parser.add_argument("-rs", "--restart_study", type=strtobool, default=False, help="force restart of optuna study")
     parser.add_argument("-sh", "--from_share", type=strtobool, default=False, help="load from share partition")
     parser.add_argument("-sj", "--slurm_job", type=int, default=0, help="slurm job")
@@ -334,10 +335,14 @@ if __name__ == "__main__":
                 else:
                     test_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
             else:
-                lest_loss = nn.MSELoss(reduction='sum')
+                test_loss = nn.MSELoss(reduction='sum')
 
-
-            test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, subsetdict['test_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
+            test_subset = None
+            if args.eval_nll == True:
+                test_subset = subsetdict['train_subset']
+            else:
+                test_subset = subsetdict['test_subset']
+            test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, test_subset , batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
             # get test metrics
             test_metrics = UME.get_metrics(test_truths, test_preds, test_total_loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = True, make_cm = True)
 

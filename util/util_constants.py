@@ -8,6 +8,7 @@ SCALERS_FOLDER = 'scalers'
 SCALERS_DOC_FOLDER = 'scalers_doc'
 CM_FOLDER = 'cm'
 RESULTS_FOLDER = 'res'
+RESULTS_TRAIN_FOLDER = 'res_train'
 MODELS_FOLDER = 'model_models'
 RDB_FOLDER = 'rdb'
 NUM_FOLDS = 20
