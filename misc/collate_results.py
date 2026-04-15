@@ -26,18 +26,23 @@ class Args:
 def df_to_dict(cur_df):
     return {k:v[0] for (k,v) in cur_df.to_dict(as_series=False).items()}
 
-def get_best_results(expr_type, dataset, model_size, suffix):
-    args = Args(expr_type, dataset, model_size, suffix)
-    cur_study = UO.create_or_load_study(args, seed=UC.SEED, evaluation = True)
-    best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_study(cur_study)
-    cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
-    layer_idx = best_param_dict['layer_idx']['value']
+    
+def get_res_by_layer_idx(expr_type, dataset, model_size, layer_idx, suffix):
     res_dir = UMN.by_projpath_multi(subpaths=['res', dataset, expr_type],make_dir = False)
     cur_csvf = os.path.join(res_dir, f'{model_size}_l{layer_idx}-{suffix}.csv')
     #print(cur_csvf)
     #cur_df = None
     cur_df = pl.read_csv(cur_csvf)
     return df_to_dict(cur_df)
+
+def get_best_results(expr_type, dataset, model_size, suffix):
+    args = Args(expr_type, dataset, model_size, suffix)
+    cur_study = UO.create_or_load_study(args, seed=UC.SEED, evaluation = True)
+    best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_study(cur_study)
+    cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
+    layer_idx = best_param_dict['layer_idx']['value']
+    res = get_res_by_layer_idx(expr_type, dataset, model_size, layer_idx, suffix)
+    return res
 
 def collate_best_results():
     suffix = 0
@@ -62,7 +67,9 @@ def collate_best_results():
         cur_csvf = os.path.join(res_dir, fname)
         cur_df.write_csv(cur_csvf)
 
-collate_best_results()
+#collate_best_results()
+
+
 
 
 
