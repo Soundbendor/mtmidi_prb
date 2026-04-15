@@ -71,7 +71,7 @@ DATASET_SHORT = {"polyrhythms": "pl",
                  "simple_progressions": "spg"
                  }
 
-DATASET_PRETTY = {"polyrhythms": "Polyrhythms",
+DATASET_PPRINT = {"polyrhythms": "Polyrhythms",
                  "dynamics": "Dynamics",
                  "seventh_chords": "Seventh Chords",
                  "mode_mixture": "Mode Mixture",
@@ -110,6 +110,36 @@ SYNTHEORY_DATASETS = set(['tempos', 'time_signatures', 'chords', 'notes', 'scale
 CHORDPROG_DATASETS = set(['secondary_dominant', 'modemix_chordprog', 'simple_progressions'])
 
 MODELS = ['baseline-concat', 'baseline-chroma', 'baseline-mfcc', 'baseline-mel', 'musicgen-audio', 'musicgen-small', 'musicgen-medium', 'musicgen-large', 'jukebox', 'MERT-v1-95M', 'MERT-v1-330M', 'wav2vec2-base', 'wav2vec2-large']
+
+
+CLS_PPRINT = {'aic': 'AIC',
+              'aic_avg': 'AIC (per-sample)',
+              'bic': 'BIC',
+              'bic_avg': 'BIC (per-sample)',
+              'ebic': 'EBIC',
+              'ebic_avg': 'EBIC (per-sample)',
+              'f1_macro': 'F1 (macro)',
+              'f1_micro': 'F1 (micro)',
+              'layer_idx': 'Layer Index',
+              'loss': 'NLL',
+              'accuracy_score': 'Accuracy',
+              'balanced_accuracy_score': 'Balanced Accuracy'
+              }
+
+MODEL_PPRINT = {'baseline-concat': "Concat.",
+                 'baseline-chroma': "Chroma",
+                 'baseline-mfcc': "MFCC",
+                 'baseline-mel': "Mel",
+                 'musicgen-audio': "EnCodec",
+                 'musicgen-small': "MusicGen-small",
+                 'musicgen-medium': "MusicGen-medium",
+                 'musicgen-large': "MusicGen-large",
+                 'jukebox': "Jukebox",
+                 'MERT-v1-95M': "MERT-95M",
+                 'MERT-v1-330M': "MERT-330M",
+                 'wav2vec2-base': "Wav2Vec2-base",
+                 'wav2vec2-large': "Wav2Vec2-large"
+                 }
 
 #datasets that are regression
 REG_DATASETS = set(['tempos'])

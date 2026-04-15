@@ -1,20 +1,30 @@
 import os
 import polars as pl
+import numpy as np
+import matplotlib.pyplot as plt
 from util import util_main as UMN
 from util import util_constants as UC
 from util import util_rdb as UR
 from util import util_optuna as UO
 import sys
 
+RESULTS_FOLDER = 'res'
+OVERALL_FOLDER = 'res_overall'
+CHART_FOLDER = 'res_chart'
+
 datasets = ['polyrhythms', 'dynamics', 'seventh_chords', 'mode_mixture', 'secondary_dominants']
 
 emb_types = ["baseline-concat","baseline-chroma","baseline-mfcc","baseline-mel","musicgen-audio","musicgen-small","musicgen-medium","musicgen-large","jukebox",'MERT-v1-95M','MERT-v1-330M','wav2vec2-base','wav2vec2-large']
 
+emb_types_ml = ["musicgen-small","musicgen-medium","musicgen-large","jukebox",'MERT-v1-95M','MERT-v1-330M','wav2vec2-base','wav2vec2-large']
+
 class_keys = ['loss', 'layer_idx', 'accuracy_score', 'f1_macro', 'f1_micro', 'balanced_accuracy_score', 'aic', 'aic_avg', 'bic', 'bic_avg', 'ebic', 'ebic_avg']
 
+legend_lr = set(['loss', 'balanced_accuracy_score', 'accuracy_score', 'f1_macro', 'f1_micro'])
 emb_idx = {k:i for (i,k) in enumerate(emb_types)}
 
 num_emb = len(emb_types)
+
 
 class Args:
     def __init__(self, expr_type, dataset, model_size, suffix):
@@ -26,10 +36,18 @@ class Args:
 def df_to_dict(cur_df):
     return {k:v[0] for (k,v) in cur_df.to_dict(as_series=False).items()}
 
-    
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'train':
+        RESULTS_FOLDER = 'res_train'
+        OVERALL_FOLDER = 'res_train_overall'
+        CHART_FOLDER = 'res_train_chart'
+
+def get_res_str(model_size, layer_idx, suffix):
+    return f'{model_size}_l{layer_idx}-{suffix}.csv'
+
 def get_res_by_layer_idx(expr_type, dataset, model_size, layer_idx, suffix):
-    res_dir = UMN.by_projpath_multi(subpaths=['res', dataset, expr_type],make_dir = False)
-    cur_csvf = os.path.join(res_dir, f'{model_size}_l{layer_idx}-{suffix}.csv')
+    res_dir = UMN.by_projpath_multi(subpaths=[RESULTS_FOLDER, dataset, expr_type],make_dir = False)
+    cur_csvf = os.path.join(res_dir, get_res_str(model_size, layer_idx, suffix))
     #print(cur_csvf)
     #cur_df = None
     cur_df = pl.read_csv(cur_csvf)
@@ -63,11 +81,101 @@ def collate_best_results():
     for metric,mdict in metrics.items():
         cur_df = pl.DataFrame(mdict)
         fname = f'{metric}_overall-{suffix}.csv'
-        res_dir = UMN.by_projpath(subpath='res_overall', make_dir = True)
+        res_dir = UMN.by_projpath(subpath=OVERALL_FOLDER, make_dir = True)
         cur_csvf = os.path.join(res_dir, fname)
         cur_df.write_csv(cur_csvf)
 
-#collate_best_results()
+def plot_per_model_across_ds(cur_x, metric, model_size, suffix, dsdict):
+    metric_pprint = UC.CLS_PPRINT[metric]
+    model_pprint = UC.MODEL_PPRINT[model_size]
+    cur_title = f'{metric_pprint} Across {model_pprint} Layer Indices'
+    cur_xlabel = 'Layer Index (1-indexed)'
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for ds, dsvals in dsdict.items():
+        ds_pprint = UC.DATASET_PPRINT[ds]
+        ax.plot(cur_x, dsvals, label=ds_pprint)
+    ax.set_xlabel(cur_xlabel)
+    ax.set_ylabel(metric_pprint)
+    ax.set_title(cur_title)
+    cur_loc = 'lower right'
+    if metric not in legend_lr:
+        cur_loc = 'upper right'
+    ax.legend(loc=cur_loc)
+    plt.tight_layout()
+    res_dir = UMN.by_projpath(subpath=CHART_FOLDER, make_dir = True)
+    fname = f'{model_size}-{metric}-{suffix}.png'
+    fpath = os.path.join(res_dir, fname)
+    plt.savefig(fpath)
+    fig.clear()
+    plt.close()
+
+
+def plot_per_ds_across_models(modelx_dict, metric, cur_ds, suffix, modeldict):
+    metric_pprint = UC.CLS_PPRINT[metric]
+    ds_pprint = UC.DATASET_PPRINT[cur_ds]
+    cur_title = f'{metric_pprint} For {ds_pprint} Across Model Depths'
+    cur_xlabel = 'Model Depth (percent)'
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for model_size, mvals in modeldict.items():
+        model_pprint = UC.MODEL_PPRINT[model_size]
+        ax.plot(modelx_dict[model_size], mvals, label=model_pprint)
+    ax.set_xlabel(cur_xlabel)
+    ax.set_ylabel(metric_pprint)
+    ax.set_title(cur_title)
+    cur_loc = 'lower right'
+    if metric not in legend_lr:
+        cur_loc = 'upper right'
+    ax.legend(loc=cur_loc)
+    plt.tight_layout()
+    res_dir = UMN.by_projpath(subpath=CHART_FOLDER, make_dir = True)
+    fname = f'{cur_ds}-{metric}-{suffix}.png'
+    fpath = os.path.join(res_dir, fname)
+    plt.savefig(fpath)
+    fig.clear()
+    plt.close()
+
+
+
+def make_charts(expr_type):
+    suffix = 0
+    m_dict = {m: {x: {ds: [] for ds in datasets} for x in class_keys if x != 'layer_idx'} for m in emb_types_ml}
+    ds_dict = {ds: {x: {m: [] for m in emb_types_ml} for x in class_keys if x != 'layer_idx'} for ds in datasets}
+    m_layer_idxs = {} # 0-index layer indices
+    m_norm_layer_idxs = {} # scale layer indices to be between 0 and 1
+    for m in emb_types_ml:
+        start_idx = 0
+        num_layers = UC.MODEL_NUM_LAYERS[m] # counting initial embeddings
+        cur_lidxs = np.arange(num_layers)
+        # non-jukebox models have initial embeddings
+        if m != 'jukebox':
+            start_idx = 1
+            cur_lidxs = np.arange(num_layers-1)
+        m_layer_idxs[m] = cur_lidxs + 1
+        m_norm_layer_idxs[m] = (cur_lidxs * 100.)/np.max(cur_lidxs)
+        for ds in datasets:
+            for li in range(start_idx, num_layers):
+                res = get_res_by_layer_idx(expr_type, ds, m, li, suffix)
+                for metric,val in res.items():
+                    if metric != 'layer_idx':
+                        m_dict[m][metric][ds].append(val)
+                        ds_dict[ds][metric][m].append(val)
+    for model,metricdict in m_dict.items():
+        cur_x_axis = m_layer_idxs[model] # don't need to normalize layer_idxs
+        for metric,dsdict in metricdict.items():
+            plot_per_model_across_ds(cur_x_axis, metric, model, suffix, dsdict)
+           
+    for cur_ds,metricdict in ds_dict.items():
+        for metric, modeldict in metricdict.items():
+            plot_per_ds_across_models(m_norm_layer_idxs, metric, cur_ds, suffix, modeldict)
+
+
+
+        
+
+
+
+#make_charts('linear')
+collate_best_results()
 
 
 

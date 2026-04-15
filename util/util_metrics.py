@@ -77,7 +77,7 @@ def make_confusion_matrix(truths, preds, layer_idx, datadict, configdict):
         ax.set_yticklabels(tick_positions, fontsize=9)
 
     expr_name = UC.EXPR_PRETTY_NAMES[configdict['expr_type']]
-    dataset_name = UC.DATASET_PRETTY[configdict['dataset']]
+    dataset_name = UC.DATASET_PPRINT[configdict['dataset']]
     title = f'{dataset_name} {expr_name} Results'
     ax.set_title(title)
     fig.tight_layout()
