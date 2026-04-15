@@ -11,6 +11,7 @@ import sys
 RESULTS_FOLDER = 'res'
 OVERALL_FOLDER = 'res_overall'
 CHART_FOLDER = 'res_chart'
+PER_MODEL_FOLDER = 'res_model'
 
 datasets = ['polyrhythms', 'dynamics', 'seventh_chords', 'mode_mixture', 'secondary_dominants']
 
@@ -41,6 +42,7 @@ if len(sys.argv) > 1:
         RESULTS_FOLDER = 'res_train'
         OVERALL_FOLDER = 'res_train_overall'
         CHART_FOLDER = 'res_train_chart'
+        PER_MODEL_FOLDER = 'res_train_model'
 
 def get_res_str(model_size, layer_idx, suffix):
     return f'{model_size}_l{layer_idx}-{suffix}.csv'
@@ -75,8 +77,12 @@ def collate_best_results():
         for m in emb_types:
             m_idx = emb_idx[m]
             res = get_best_results('linear', ds, m, suffix)
-            for metric,val in res.items(): 
-                metrics[metric][ds][m_idx] = val
+            for metric,val in res.items():
+                # jukebox does not have initial embedding input
+                if m == 'jukebox' and 'metric' == 'layer_idx':
+                    metrics[metric][ds][m_idx] = val + 1
+                else:
+                    metrics[metric][ds][m_idx] = val
     
     for metric,mdict in metrics.items():
         cur_df = pl.DataFrame(mdict)
@@ -135,6 +141,18 @@ def plot_per_ds_across_models(modelx_dict, metric, cur_ds, suffix, modeldict):
     plt.close()
 
 
+def make_model_compiled_csv_per_ds(model, model_x, metricdict, suffix):
+    for ds in datasets:
+        df_json = {'layer_number': model_x}
+        for x in metricdict.keys():
+            df_json[x] = metricdict[x][ds]
+        cur_df = pl.DataFrame(df_json)
+        fname = f'{model}_compiled-{suffix}.csv'
+        res_dir = UMN.by_projpath_multi(subpaths=[PER_MODEL_FOLDER,ds], make_dir = True)
+        cur_csvf = os.path.join(res_dir, fname)
+        cur_df.write_csv(cur_csvf)
+
+
 
 def make_charts(expr_type):
     suffix = 0
@@ -163,6 +181,7 @@ def make_charts(expr_type):
         cur_x_axis = m_layer_idxs[model] # don't need to normalize layer_idxs
         for metric,dsdict in metricdict.items():
             plot_per_model_across_ds(cur_x_axis, metric, model, suffix, dsdict)
+        make_model_compiled_csv_per_ds(model, cur_x_axis, metricdict, suffix)
            
     for cur_ds,metricdict in ds_dict.items():
         for metric, modeldict in metricdict.items():
@@ -174,8 +193,8 @@ def make_charts(expr_type):
 
 
 
-#make_charts('linear')
 collate_best_results()
+make_charts('linear')
 
 
 
