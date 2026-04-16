@@ -26,28 +26,29 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
     if scaler != None:
         scaler.eval()
 
-    for batch_idx, data in enumerate(train_dl):
-        _ipt, ground_truth = data
-        ipt = None
+    with torch.no_grad():
+        for batch_idx, data in enumerate(train_dl):
+            _ipt, ground_truth = data
+            ipt = None
 
-        if scaler != None:
-            ipt = scaler.transform(_ipt)
-        else:
-            ipt = _ipt
-    
-        if ipt.shape[0] != train_size:
-            print(f'did not load entire split of size {train_size}')
-            break
-        cov = torch.cov(ipt.T)
-        if cov.shape[0] != emb_dim or cov.shape[1] != emb_dim:
-            print(f'did not match emb_dim of size {emb_dim}')
-            break
-        else:
-            cur_shape = cov.shape
-            print(f'successfully formed cov of shape {cur_shape} for ({train_size},{emb_dim})')
-            tr_sq = torch.square(torch.diag(cov).sum())
-            sum_sq = torch.square(cov).sum()
-            ret = tr_sq/sum_sq
+            if scaler != None:
+                ipt = scaler.transform(_ipt)
+            else:
+                ipt = _ipt
+        
+            if ipt.shape[0] != train_size:
+                print(f'did not load entire split of size {train_size}')
+                break
+            cov = torch.cov(ipt.T)
+            if cov.shape[0] != emb_dim or cov.shape[1] != emb_dim:
+                print(f'did not match emb_dim of size {emb_dim}')
+                break
+            else:
+                cur_shape = cov.shape
+                print(f'successfully formed cov of shape {cur_shape} for ({train_size},{emb_dim})')
+                tr_sq = torch.square(torch.diag(cov).sum())
+                sum_sq = torch.square(cov).sum()
+                ret = tr_sq/sum_sq
     return ret
 
 
@@ -377,7 +378,7 @@ if __name__ == "__main__":
                     print(f'calculation failed at layer {layer_idx}')
                     break
                 else:
-                    print(f'saving pr (train: {args.eval_nll}) for {args.dataset} at layer {layer_idx}')
+                    print(f'saving pr ({cur_pr}, train: {args.eval_nll}) for {args.dataset} at layer {layer_idx}')
                     UP.save_part_rto(cur_pr, configdict, layer_idx, trial_number)
             elif args.eval == True:
                 model = MLPProbe(in_dim =configdict['model_dim'], out_dim = datadict['num_classes'], dropout = dropout, initial_dropout = configdict['probe_initial_dropout'], hidden_dims = configdict['probe_hidden_dims'])
