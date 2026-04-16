@@ -57,8 +57,14 @@ if __name__ == "__main__":
         for model_size in args.model_sizes:
             size_short = UC.MODEL_SIZES_SHORT[model_size]         
             job_str = f'{expr_short}-{ds_short}-{size_short}'
-            if args.eval == True:
-                job_str = f'e_{job_str}'
+            if args.eval == True and args.eval_nll == False and args.part_rto == False:
+                job_str = f'ete_{job_str}'
+            elif args.eval == True and args.eval_nll == True and args.part_rto == False:
+                job_str = f'etr_{job_str}'
+            elif args.eval == True and args.eval_nll == False and args.part_rto == True:
+                job_str = f'pte_{job_str}'
+            elif args.eval == True and args.eval_nll == True and args.part_rto == True:
+                job_str = f'ptr_{job_str}'
             slurm_strarr1 = ["#!/bin/bash"]
             slurm_strarr2 = [f"#SBATCH -p {args.partition}"]
             if args.partition != 'preempt':
