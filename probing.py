@@ -31,7 +31,6 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
         ipt = None
 
         if scaler != None:
-            scaler.partial_fit(_ipt)
             ipt = scaler.transform(_ipt)
         else:
             ipt = _ipt
