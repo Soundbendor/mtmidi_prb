@@ -178,6 +178,31 @@ def load_model_dict(model, configdict, layer_idx, trial_number, device='cpu'):
     save_path = UMN.get_save_path('model', configdict, other=other_str, make_dir = False)
     model.load_state_dict(torch.load(save_path, map_location=device, weights_only = False))
 
+def save_part_rto(cur_pr, configdict, layer_idx, trial_number):
+    suffix = configdict['suffix']
+    split_str = 'nil'
+    if configdict['eval_nll'] == True:
+        split_str = 'train'
+    else:
+        split_str = 'test'
+    layer_str = f'l{layer_idx}'
+    trial_str = f't{trial_number}'
+    save_path = UMN.get_save_path('part_rto', configdict, other=other_str, make_dir = True)
+    np.save(save_path, cur_pr.cpu().numpy())
+
+def load_part_rto(configdict, trial_number, layer_idx):
+    suffix = configdict['suffix']
+    split_str = 'nil'
+    if configdict['eval_nll'] == True:
+        split_str = 'train'
+    else:
+        split_str = 'test'
+
+    layer_str = f'l{layer_idx}'
+    trial_str = f't{trial_number}'
+    other_str = f'{layer_str}_{trial_str}_{split_str}_{suffix}'
+    save_path = UMN.get_save_path('part_rto', configdict, other=other_str, make_dir = False)
+    return np.load(save_path)
 
 def log_scaler_epoch_mean_var(run_name, scalerdict):
     means = scalerdict['mean_vecs_epoch'].detach().cpu().numpy()

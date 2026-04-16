@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from . import util_main as UMN
+from . import util_probing as UP
 from . import util_constants as UC
 
 
@@ -90,7 +91,7 @@ def make_confusion_matrix(truths, preds, layer_idx, datadict, configdict):
     return cmd.confusion_matrix
 
 # make_cm = make confusion matrix
-def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
+def get_classification_metrics(truths, preds, loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
 
     ret = {} 
     ret['loss'] = loss
@@ -102,6 +103,7 @@ def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetd
     # only save for eval
     if save_to_csv == True:
         N = None
+        pr = UP.load_part_rto(configdict, trial_number, layer_idx)
         if configdict['eval_nll'] == True:
             N = subsetdict['train_size']
         else:
@@ -110,12 +112,28 @@ def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetd
         D = UC.FFN_DIM[model_size] 
         c = datadict['num_classes']
         k = (D*c) + c
-        ret['aic'] = aic(loss, k, N, per_sample = False)
-        ret['aic_avg'] = aic(loss, k, N, per_sample = True)
-        ret['bic'] = bic(loss, k, N, per_sample = False) 
-        ret['bic_avg'] = bic(loss, k, N, per_sample = True) 
-        ret['ebic'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = False) 
-        ret['ebic_avg'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = True) 
+        ret['aic_rep'] = aic(loss, D, N, per_sample = False)
+        ret['aic_rep_avg'] = aic(loss, D, N, per_sample = True)
+        ret['bic_rep'] = bic(loss, D, N, per_sample = False) 
+        ret['bic_rep_avg'] = bic(loss, D, N, per_sample = True) 
+        ret['ebic_rep'] = ebic(loss, D, N, D, gamma = UC.EBIC_GAMMA, per_sample = False) 
+        ret['ebic_rep_avg'] = ebic(loss, D, N, D, gamma = UC.EBIC_GAMMA, per_sample = True) 
+
+        ret['aic_cls'] = aic(loss, k, N, per_sample = False)
+        ret['aic_cls_avg'] = aic(loss, k, N, per_sample = True)
+        ret['bic_cls'] = bic(loss, k, N, per_sample = False) 
+        ret['bic_cls_avg'] = bic(loss, k, N, per_sample = True) 
+        ret['ebic_cls'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = False) 
+        ret['ebic_cls_avg'] = ebic(loss, k, N, k, gamma = UC.EBIC_GAMMA, per_sample = True) 
+        
+        ret['aic_pr'] = aic(loss, pr, N, per_sample = False)
+        ret['aic_pr_avg'] = aic(loss, pr, N, per_sample = True)
+        ret['bic_pr'] = bic(loss, pr, N, per_sample = False) 
+        ret['bic_pr_avg'] = bic(loss, pr, N, per_sample = True) 
+        ret['ebic_pr'] = ebic(loss, pr, N, pr, gamma = UC.EBIC_GAMMA, per_sample = False) 
+        ret['ebic_pr_avg'] = ebic(loss, pr, N, pr, gamma = UC.EBIC_GAMMA, per_sample = True) 
+
+
         save_results_to_csv(ret, configdict, layer_idx)
     if make_cm == True:
         ret['cm'] = make_confusion_matrix(truths, preds, layer_idx, datadict, configdict)
@@ -139,9 +157,9 @@ def get_regression_metrics(truths, preds, loss, layer_idx, configdict, save_to_c
         save_results_to_csv(ret, configdict, layer_idx)
     return ret
 
-def get_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
+def get_metrics(truths, preds, loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False):
     if datadict['is_classification'] == True:
-        return get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
+        return get_classification_metrics(truths, preds, loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = save_to_csv, make_cm = make_cm)
     else:
         return get_regression_metrics(truths, preds, loss, layer_idx, configdict, save_to_csv = save_to_csv)
 

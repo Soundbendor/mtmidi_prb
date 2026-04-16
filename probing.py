@@ -19,6 +19,41 @@ from functools import partial
 from distutils.util import strtobool
 import os, sys, time, argparse, copy
 
+def calculate_participation_ratio(scaler, generator, train_subset, train_size, emb_dim, shuffle = True, device='cpu'):
+    train_dl = TUD.DataLoader(train_subset, batch_size = train_size, shuffle=shuffle, generator=generator)
+    
+    ret = -1.
+    if scaler != None:
+        scaler.eval()
+
+    for batch_idx, data in enumerate(train_dl):
+        _ipt, ground_truth = data
+        ipt = None
+
+        if scaler != None:
+            scaler.partial_fit(_ipt)
+            ipt = scaler.transform(_ipt)
+        else:
+            ipt = _ipt
+    
+        if ipt.shape[0] != train_size:
+            print(f'did not load entire train split of size {train_size}')
+            break
+        cov = torch.cov(ipt.T)
+        if cov.shape[0] != emb_dim or cov.shape[1] != emb_dim:
+            print(f'did not match emb_dim of size {emb_dim}')
+            break
+        else:
+            cur_shape = cov.shape
+            print(f'successfully formed cov of shape {cur_shape}')
+            tr_sq = torch.square(torch.diag(cov).sum())
+            sum_sq = torch.square(cov).sum()
+            ret = tr_sq
+    return ret
+
+
+
+
 def train_model(model, scaler, generator, opt_fn, loss_fn, train_subset, batch_size=64, shuffle = True, is_classification = True, device='cpu'):
     train_dl = TUD.DataLoader(train_subset, batch_size = batch_size, shuffle=shuffle, generator=generator)
     
@@ -180,7 +215,7 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
         train_avg_loss = train_model(model, scaler, torch_gen, opt_fn, train_loss, subsetdict['train_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
         total_loss, valid_truths, valid_preds = valid_test_model(model, scaler, torch_gen, valid_loss, subsetdict['valid_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
         # get validation metrics
-        valid_metrics = UME.get_metrics(valid_truths, valid_preds, total_loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False)
+        valid_metrics = UME.get_metrics(valid_truths, valid_preds, total_loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False)
         accum_metrics.append(valid_metrics)
         cur_score = UME.get_optimization_metric(valid_metrics, datadict)
 
@@ -245,6 +280,7 @@ if __name__ == "__main__":
     parser.add_argument("-cd", "--use_cuda", type=strtobool, default=True, help="use cuda")
     parser.add_argument("-ev", "--eval", type=strtobool, default=False, help="eval")
     parser.add_argument("-eb", "--eval_best", type=strtobool, default=False, help="eval on the best trial per model")
+    parser.add_argument("-pr", "--part_rto", type=strtobool, default=False, help="calculate participation ratio")
     parser.add_argument("-en", "--eval_nll", type=strtobool, default=False, help="do eval on training dataset for nll comps")
     parser.add_argument("-rs", "--restart_study", type=strtobool, default=False, help="force restart of optuna study")
     parser.add_argument("-sh", "--from_share", type=strtobool, default=False, help="load from share partition")
@@ -284,7 +320,8 @@ if __name__ == "__main__":
         objective = partial(_objective, datadict=datadict, subsetdict=subsetdict, configdict=configdict, wandbdict=wandbdict, device=device)
         callback_arr = [UO.study_callback]
         studydict['study'].optimize(objective, timeout = None, n_trials = None, n_jobs=1, gc_after_trial = True, callbacks=callback_arr)
-    else:
+
+    else args.part_rto == True or args.eval == True:
         # EVALUATION ========== 
 
         # load study and get best params given rdb
@@ -300,7 +337,6 @@ if __name__ == "__main__":
                 best_param_dict, best_trial_dict, attr_dict = UR.get_best_params_of_layer_idx(cur_study, layer_idx)
                 cur_params = UR.make_eval_param_dict(best_param_dict, best_trial_dict)
                 eval_params.append(cur_params)
-
         for param_dict in eval_params:
             layer_idx = param_dict['layer_idx']
             trial_number = param_dict['trial_number']
@@ -315,34 +351,50 @@ if __name__ == "__main__":
             torch_gen = torch.Generator(device=device)
             torch_gen.manual_seed(configdict['torch_seed'])
 
+            # set layer indices
+            subsetdict['train_subset'].dataset.set_layer_idx(layer_idx)
+            subsetdict['valid_subset'].dataset.set_layer_idx(layer_idx)
+            subsetdict['test_subset'].dataset.set_layer_idx(layer_idx)
+
+
+            test_subset = None
+            test_size = -1
+            if args.eval_nll == True:
+                test_subset = subsetdict['train_subset']
+                test_size = subsetdict['train_size']
+            else:
+                test_subset = subsetdict['test_subset']
+                test_size = subsetdict['test_size']
+
             # init/load models
             scaler = None
             if data_norm == True:
                 scaler = StandardScaler(with_mean = True, with_std = True, use_64bit = configdict['is_64bit'], dim=configdict['model_dim'], use_constant_feature_mask = configdict['standard_scaler_constant_feature_mask'], device = device)
                 UP.load_scaler_dict(scaler, configdict, layer_idx, trial_number, device=device)
                 scaler.eval()
-
-            model = MLPProbe(in_dim =configdict['model_dim'], out_dim = datadict['num_classes'], dropout = dropout, initial_dropout = configdict['probe_initial_dropout'], hidden_dims = configdict['probe_hidden_dims'])
-
-            UP.load_model_dict(model, configdict, layer_idx, trial_number, device=device)
-            subsetdict['test_subset'].dataset.set_layer_idx(layer_idx)
-
-            # get loss
-            test_loss = None
-            if datadict['is_classification'] == True:
-                if datadict['is_balanced'] == True:
-                    test_loss = nn.CrossEntropyLoss(reduction='sum')
+            if args.part_rto == True:
+                cur_pr = calculate_participation_ratio(scaler, torch_gen, test_subset, test_size, configdict['model_dim'], shuffle = True, device=device)
+                if cur_pr <= 0.:
+                    print(f'calculation failed at layer {layer_idx}')
+                    break
                 else:
-                    test_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
-            else:
-                test_loss = nn.MSELoss(reduction='sum')
+                    UP.save_part_rto(cur_pr, configdict, layer_idx, trial_number)
+            elif args.eval == True:
+                model = MLPProbe(in_dim =configdict['model_dim'], out_dim = datadict['num_classes'], dropout = dropout, initial_dropout = configdict['probe_initial_dropout'], hidden_dims = configdict['probe_hidden_dims'])
 
-            test_subset = None
-            if args.eval_nll == True:
-                test_subset = subsetdict['train_subset']
-            else:
-                test_subset = subsetdict['test_subset']
-            test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, test_subset , batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
-            # get test metrics
-            test_metrics = UME.get_metrics(test_truths, test_preds, test_total_loss, layer_idx, datadict, subsetdict, configdict, save_to_csv = True, make_cm = True)
+                UP.load_model_dict(model, configdict, layer_idx, trial_number, device=device)
+
+                # get loss
+                test_loss = None
+                if datadict['is_classification'] == True:
+                    if datadict['is_balanced'] == True:
+                        test_loss = nn.CrossEntropyLoss(reduction='sum')
+                    else:
+                        test_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
+                else:
+                    test_loss = nn.MSELoss(reduction='sum')
+
+                test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, test_subset , batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
+                # get test metrics
+                test_metrics = UME.get_metrics(test_truths, test_preds, test_total_loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = True, make_cm = True)
 

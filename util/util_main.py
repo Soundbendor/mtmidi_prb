@@ -187,6 +187,9 @@ def get_save_path(save_type, configdict, other=None, make_dir = True):
     elif save_type == 'model':
         subfolder = UC.MODELS_FOLDER
         ext = 'model_dict'
+    elif save_type == 'part_rto':
+        subfolder = UC.PART_RTO_FOLDER
+        ext = 'npy'
     elif save_type == 'scaler64':
         subfolder = UC.SCALERS_FOLDER
         ext = 'scaler64_dict'
