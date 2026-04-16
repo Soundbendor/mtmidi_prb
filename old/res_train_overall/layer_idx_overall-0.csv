@@ -1,0 +1,14 @@
+model,polyrhythms,dynamics,seventh_chords,mode_mixture,secondary_dominants
+baseline-concat,0,0,0,0,0
+baseline-chroma,0,0,0,0,0
+baseline-mfcc,0,0,0,0,0
+baseline-mel,0,0,0,0,0
+musicgen-audio,0,0,0,0,0
+musicgen-small,24,16,5,8,10
+musicgen-medium,48,30,48,48,30
+musicgen-large,48,32,48,31,32
+jukebox,52,56,57,56,56
+MERT-v1-95M,2,7,3,10,6
+MERT-v1-330M,14,10,3,4,4
+wav2vec2-base,2,5,1,1,2
+wav2vec2-large,15,7,2,2,3
