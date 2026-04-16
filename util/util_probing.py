@@ -187,6 +187,7 @@ def save_part_rto(cur_pr, configdict, layer_idx, trial_number):
         split_str = 'test'
     layer_str = f'l{layer_idx}'
     trial_str = f't{trial_number}'
+    other_str = f'{layer_str}_{trial_str}_{split_str}_{suffix}'
     save_path = UMN.get_save_path('part_rto', configdict, other=other_str, make_dir = True)
     np.save(save_path, cur_pr.cpu().numpy())
 

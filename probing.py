@@ -45,7 +45,7 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
             break
         else:
             cur_shape = cov.shape
-            print(f'successfully formed cov of shape {cur_shape}')
+            print(f'successfully formed cov of shape {cur_shape} for ({train_size},{emb_dim})')
             tr_sq = torch.square(torch.diag(cov).sum())
             sum_sq = torch.square(cov).sum()
             ret = tr_sq/sum_sq
@@ -378,6 +378,7 @@ if __name__ == "__main__":
                     print(f'calculation failed at layer {layer_idx}')
                     break
                 else:
+                    print(f'saving pr (train: {args.eval_nll}) for {args.dataset} at layer {layer_idx}')
                     UP.save_part_rto(cur_pr, configdict, layer_idx, trial_number)
             elif args.eval == True:
                 model = MLPProbe(in_dim =configdict['model_dim'], out_dim = datadict['num_classes'], dropout = dropout, initial_dropout = configdict['probe_initial_dropout'], hidden_dims = configdict['probe_hidden_dims'])
@@ -394,6 +395,7 @@ if __name__ == "__main__":
                 else:
                     test_loss = nn.MSELoss(reduction='sum')
 
+                print(f'evaluating (train: {args.eval_nll}) for {args.dataset} at layer {layer_idx}')
                 test_total_loss, test_truths, test_preds = valid_test_model(model, scaler, torch_gen, test_loss, test_subset , batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
                 # get test metrics
                 test_metrics = UME.get_metrics(test_truths, test_preds, test_total_loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = True, make_cm = True)
