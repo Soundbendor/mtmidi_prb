@@ -22,7 +22,7 @@ import os, sys, time, argparse, copy
 def calculate_participation_ratio(scaler, generator, train_subset, train_size, emb_dim, shuffle = True, device='cpu'):
     train_dl = TUD.DataLoader(train_subset, batch_size = train_size, shuffle=shuffle, generator=generator)
     
-    ret = -1.
+    ret = torch.tensor(-1.)
     if scaler != None:
         scaler.eval()
 
@@ -37,7 +37,7 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
             ipt = _ipt
     
         if ipt.shape[0] != train_size:
-            print(f'did not load entire train split of size {train_size}')
+            print(f'did not load entire split of size {train_size}')
             break
         cov = torch.cov(ipt.T)
         if cov.shape[0] != emb_dim or cov.shape[1] != emb_dim:
@@ -48,7 +48,7 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
             print(f'successfully formed cov of shape {cur_shape}')
             tr_sq = torch.square(torch.diag(cov).sum())
             sum_sq = torch.square(cov).sum()
-            ret = tr_sq
+            ret = tr_sq/sum_sq
     return ret
 
 
