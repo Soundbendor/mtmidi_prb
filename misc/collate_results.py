@@ -15,9 +15,10 @@ PER_MODEL_FOLDER = 'res_model'
 
 datasets = ['polyrhythms', 'dynamics', 'seventh_chords', 'mode_mixture', 'secondary_dominants']
 
-emb_types = ["baseline-concat","baseline-chroma","baseline-mfcc","baseline-mel","musicgen-audio","musicgen-small","musicgen-medium","musicgen-large","jukebox",'MERT-v1-95M','MERT-v1-330M','wav2vec2-base','wav2vec2-large']
+emb_types = ['wav2vec2-large', 'wav2vec2-base', 'MERT-v1-330M', 'MERT-v1-95M', 'jukebox', 'musicgen-large', 'musicgen-medium', 'musicgen-small', 'musicgen-audio', 'baseline-mel', 'baseline-mfcc', 'baseline-chroma', 'baseline-concat']
 
-emb_types_ml = ["musicgen-small","musicgen-medium","musicgen-large","jukebox",'MERT-v1-95M','MERT-v1-330M','wav2vec2-base','wav2vec2-large']
+
+emb_types_ml = ['wav2vec2-large', 'wav2vec2-base', 'MERT-v1-330M', 'MERT-v1-95M', 'jukebox', 'musicgen-large', 'musicgen-medium', 'musicgen-small']
 
 class_keys = ['loss', 'layer_idx', 'accuracy_score', 'f1_macro', 'f1_micro', 'balanced_accuracy_score', 'aic', 'aic_avg', 'bic', 'bic_avg', 'ebic', 'ebic_avg']
 
