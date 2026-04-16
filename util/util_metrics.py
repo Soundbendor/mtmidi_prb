@@ -107,7 +107,9 @@ def get_classification_metrics(truths, preds, loss, layer_idx, datadict, subsetd
         else:
             N = subsetdict['test_size']
         model_size = configdict['model_size']
-        k = UC.FFN_DIM[model_size]
+        D = UC.FFN_DIM[model_size] 
+        c = datadict['num_classes']
+        k = (D*c) + c
         ret['aic'] = aic(loss, k, N, per_sample = False)
         ret['aic_avg'] = aic(loss, k, N, per_sample = True)
         ret['bic'] = bic(loss, k, N, per_sample = False) 
