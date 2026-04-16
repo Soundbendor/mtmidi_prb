@@ -321,7 +321,7 @@ if __name__ == "__main__":
         callback_arr = [UO.study_callback]
         studydict['study'].optimize(objective, timeout = None, n_trials = None, n_jobs=1, gc_after_trial = True, callbacks=callback_arr)
 
-    else args.part_rto == True or args.eval == True:
+    elif args.part_rto == True or args.eval == True:
         # EVALUATION ========== 
 
         # load study and get best params given rdb
