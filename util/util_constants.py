@@ -14,9 +14,9 @@ PART_RTO_FOLDER = 'part_rto'
 RDB_FOLDER = 'rdb'
 NUM_FOLDS = 20
 EARLY_STOPPING_CHECK_INTERVAL = 1
-EARLY_STOPPING_BOREDOM = 10
+EARLY_STOPPING_BOREDOM = 50
 MEMMAP = True
-NUM_EPOCHS = 100
+NUM_EPOCHS = 200
 BATCH_SIZE = 64
 LEARNING_RATE = 10.**(-3)
 # no l2 weight decay (set to -2 in original which meant turn off)
