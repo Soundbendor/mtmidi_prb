@@ -20,7 +20,31 @@ emb_types = ['wav2vec2-large', 'wav2vec2-base', 'MERT-v1-330M', 'MERT-v1-95M', '
 
 emb_types_ml = ['wav2vec2-large', 'wav2vec2-base', 'MERT-v1-330M', 'MERT-v1-95M', 'jukebox', 'musicgen-large', 'musicgen-medium', 'musicgen-small']
 
-class_keys = ['loss', 'layer_idx', 'accuracy_score', 'f1_macro', 'f1_micro', 'balanced_accuracy_score', 'aic', 'aic_avg', 'bic', 'bic_avg', 'ebic', 'ebic_avg']
+class_keys = ['loss',
+              'layer_idx',
+              'accuracy_score',
+              'f1_macro',
+              'f1_micro',
+              'balanced_accuracy_score',
+              'aic_pr',
+              'aic_pr_avg',
+              'bic_pr',
+              'bic_pr_avg',
+              'ebic_pr',
+              'ebic_pr_avg',
+              'aic_rep',
+              'aic_rep_avg',
+              'bic_rep',
+              'bic_rep_avg',
+              'ebic_rep',
+              'ebic_rep_avg',
+              'aic_cls',
+              'aic_cls_avg',
+              'bic_cls',
+              'bic_cls_avg',
+              'ebic_cls',
+              'ebic_cls_avg'
+              ]
 
 legend_lr = set(['loss', 'balanced_accuracy_score', 'accuracy_score', 'f1_macro', 'f1_micro'])
 emb_idx = {k:i for (i,k) in enumerate(emb_types)}
@@ -50,7 +74,9 @@ def get_res_str(model_size, layer_idx, suffix):
 
 def get_res_by_layer_idx(expr_type, dataset, model_size, layer_idx, suffix):
     res_dir = UMN.by_projpath_multi(subpaths=[RESULTS_FOLDER, dataset, expr_type],make_dir = False)
-    cur_csvf = os.path.join(res_dir, get_res_str(model_size, layer_idx, suffix))
+    res_str =  get_res_str(model_size, layer_idx, suffix)
+    cur_csvf = os.path.join(res_dir, res_str)
+    print(f'fetching {cur_csvf}')
     #print(cur_csvf)
     #cur_df = None
     cur_df = pl.read_csv(cur_csvf)
