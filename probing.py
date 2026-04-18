@@ -54,12 +54,13 @@ def calculate_participation_ratio(scaler, generator, train_subset, train_size, e
 
 
 
-def train_model(model, scaler, generator, opt_fn, loss_fn, train_subset, batch_size=64, shuffle = True, is_classification = True, device='cpu'):
+def train_model(model, scaler, generator, opt_fn, loss_fn, train_subset, scheduler, batch_size=64, global_batch_count = 0, warmup_batch_count = 100, shuffle = True, is_classification = True, device='cpu'):
     train_dl = TUD.DataLoader(train_subset, batch_size = batch_size, shuffle=shuffle, generator=generator)
     
     total_loss = 0.
     iters = 0
 
+    cur_batch_count = global_batch_count
     if scaler != None:
         scaler.eval()
 
@@ -83,12 +84,17 @@ def train_model(model, scaler, generator, opt_fn, loss_fn, train_subset, batch_s
             loss = loss_fn(model_pred.flatten(), ground_truth.flatten())
         
         loss.backward()
+        nn.utils.clip_grad_norm_(model.parameters(), max_norm=UC.GRAD_MAX_NORM)
         opt_fn.step()
         cur_loss = loss.item()
         total_loss += cur_loss
         iters += 1
+        if scheduler != None:
+            if cur_batch_count <= warmup_batch_count:
+                scheduler.step()
+            cur_batch_count += 1
     avg_loss = total_loss/float(iters)
-    return avg_loss
+    return avg_loss, cur_batch_count
 
 def valid_test_model(model, scaler, generator, loss_fn, valid_subset, batch_size=64, shuffle = True, is_classification = True, device='cpu'):
     valid_dl = TUD.DataLoader(valid_subset, batch_size = batch_size, shuffle=shuffle, generator=generator)
@@ -137,15 +143,15 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     # suggested params
     layer_idx = trial.suggest_categorical('layer_idx', list(range(configdict['model_num_layers'])))
     
-    l2_weight_decay_exp = trial.suggest_int('l2_weight_decay_exp', -4, -2, step= 1)
+    l2_weight_decay_exp = trial.suggest_int('l2_weight_decay_exp', -5, 0, step= 1)
     l2_weight_decay = 0
 
     l2_weight_decay = 10.**l2_weight_decay_exp
 
     dropout = trial.suggest_float('dropout', 0.0, 0.75, step=0.25)
-    batch_size = trial.suggest_categorical('batch_size', [64,256])
+    batch_size = trial.suggest_categorical('batch_size', [64,256,1024,2048, 4196])
     data_norm = trial.suggest_categorical('data_norm', [True, False])
-    lr_exp = trial.suggest_int('learning_rate_exp', -5, -3, step=1)
+    lr_exp = trial.suggest_int('learning_rate_exp', -5, -1, step=1)
     learning_rate = 10**lr_exp
 
     run_name = UO.get_run_name(configdict, layer_idx, is_short = False)
@@ -173,7 +179,8 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     else:
         opt_fn = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-
+    plateau_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt_fn, patience=UC.SCHED_PATIENCE)
+    warmup_sched = torch.optim.lr_scheduler.LinearLR(opt_fn, start_factor=UC.WARMUP_FACTOR, end_factor=1.0, total_iters=UC.WARMUP_BATCH_COUNT, last_epoch=-1)
     train_loss = None
     valid_loss = None
     if datadict['is_classification'] == True:
@@ -181,8 +188,10 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
             train_loss = nn.CrossEntropyLoss(reduction='mean')
             valid_loss = nn.CrossEntropyLoss(reduction='sum')
         else:
-            train_loss = nn.CrossEntropyLoss(reduction='mean', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
-            valid_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
+            train_loss = nn.CrossEntropyLoss(reduction='mean')
+            valid_loss = nn.CrossEntropyLoss(reduction='sum')
+            #train_loss = nn.CrossEntropyLoss(reduction='mean', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
+            #valid_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
     else:
         train_loss = nn.MSELoss(reduction='mean')
         valid_loss = nn.MSELoss(reduction='sum')
@@ -190,6 +199,7 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     # other init
     using_early_stopping =  configdict['early_stopping_check_interval'] > 0
     boredom = 0
+    cur_batch_count = 0
         
     best_score = float('-inf')
     ret_score = float('-inf')
@@ -199,7 +209,7 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     best_model_dict = None
     best_scaler_dict = None
     actual_training_epochs = None
-
+    
     # wandbstuff
     cur_run = None
     run_name = None
@@ -212,8 +222,10 @@ def _objective(trial, datadict, subsetdict, configdict, wandbdict, device='cpu')
     # now for the actual train/valid loops
     for epoch_idx in range(configdict['num_epochs']):
         # train/valid
-        train_avg_loss = train_model(model, scaler, torch_gen, opt_fn, train_loss, subsetdict['train_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
+        train_avg_loss, cur_batch_count = train_model(model, scaler, torch_gen, opt_fn, train_loss, subsetdict['train_subset'], warmup_sched, batch_size=batch_size, global_batch_count = cur_batch_count, warmup_batch_count = UC.WARMUP_BATCH_COUNT, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
         total_loss, valid_truths, valid_preds = valid_test_model(model, scaler, torch_gen, valid_loss, subsetdict['valid_subset'], batch_size=batch_size, shuffle = configdict['dataloader_shuffle'], is_classification = datadict['is_classification'], device=device)
+        if cur_batch_count > UC.WARMUP_BATCH_COUNT:
+            plateau_sched.step(total_loss)
         # get validation metrics
         valid_metrics = UME.get_metrics(valid_truths, valid_preds, total_loss, layer_idx, trial_number, datadict, subsetdict, configdict, save_to_csv = False, make_cm = False)
         accum_metrics.append(valid_metrics)
@@ -391,7 +403,8 @@ if __name__ == "__main__":
                     if datadict['is_balanced'] == True:
                         test_loss = nn.CrossEntropyLoss(reduction='sum')
                     else:
-                        test_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
+                        test_loss = nn.CrossEntropyLoss(reduction='sum')
+                        #test_loss = nn.CrossEntropyLoss(reduction='sum', weight = torch.from_numpy(subsetdict['weights']).to(device=device, dtype=(torch.float32 if configdict['is_64bit'] == False else torch.float64)))
                 else:
                     test_loss = nn.MSELoss(reduction='sum')
 

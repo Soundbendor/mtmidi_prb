@@ -4,8 +4,8 @@ import optuna
 from . import util_main as UMN
 from . import util_constants as UC
 
-singlelayer_search_space = {'l2_weight_decay_exp': [-4, -3, -2], 'dropout': [0.0], "learning_rate_exp": [-5, -4, -3], "batch_size": [64, 256], "data_norm": [True, False]}
-multilayer_search_space = {'l2_weight_decay_exp': [-2], 'dropout': [0.0], "batch_size": [64], "data_norm": [True], 'learning_rate_exp': [-3] }
+singlelayer_search_space = {'l2_weight_decay_exp': [0], 'dropout': [0.0], "learning_rate_exp": [-3], "batch_size": [2048], "data_norm": [True]}
+multilayer_search_space = {'l2_weight_decay_exp': [0], 'dropout': [0.0], "batch_size": [2048], "data_norm": [True], 'learning_rate_exp': [-3] }
 
 def study_callback(study, trial):
     study_sampler_path = study.user_attrs['sampler_filepath']
